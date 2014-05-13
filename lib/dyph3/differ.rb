@@ -4,9 +4,9 @@ module Dyph3
     
     DEFAULT_OPTIONS = {
       markers: {
-        left:       "<<<<<<<<<<<<<<<<<<<<<<<<<\n",
-        separator:  "=========================\n",
-        right:      ">>>>>>>>>>>>>>>>>>>>>>>>>\n"
+        left:       "<<<<<<<<<<<<<<<<<<<<<<<<<",
+        separator:  "=========================",
+        right:      ">>>>>>>>>>>>>>>>>>>>>>>>>"
       }
     }
     
@@ -15,13 +15,13 @@ module Dyph3
       left_lines = left.split("\n")
       right_lines = right.split("\n")
       
-      results = diff3(base_lines, left_lines, right_lines)
+      results = diff3(base_lines, left_lines, right_lines, options)
       
       results.join("\n")
     end
     
     def self.diff3(base, left, right, options={})
-      options = options.merge(DEFAULT_OPTIONS)
+      options = DEFAULT_OPTIONS.merge(options)
       
       left_marker = options[:markers][:left]
       separator_marker = options[:markers][:separator]
@@ -35,7 +35,7 @@ module Dyph3
       while base_nr < base_len && left_nr < left_len && right_nr < right_len
         # unchanged
         if base[base_nr] == left[left_nr] && base[base_nr] == right[right_nr]
-          resunt << base[base_nr]
+          result << base[base_nr]
           base_nr += 1
           left_nr += 1
           right_nr += 1
@@ -51,7 +51,7 @@ module Dyph3
             if match(base, left, base_nr, left_nr, right_changed_lines) == right_changed_lines
               # left is unchanged
               
-              result.append(right[right_nr .. right_match[1]])
+              result.concat(right[right_nr .. right_match[1]])
               base_nr = right_match[0]
               right_nr = right_match[1]
               left_nr += right_changed_lines
@@ -60,9 +60,9 @@ module Dyph3
               
               base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
               result << left_marker
-              result.append(left[left_nr .. left_m])
+              result.concat(left[left_nr .. left_m])
               result << separator_marker
-              result.append(right[right_nr .. right_m])
+              result.concat(right[right_nr .. right_m])
               result << right_marker
               base_nr, left_nr, right_nr = base_m, left_m, right_m
             end
@@ -71,7 +71,7 @@ module Dyph3
             left_changed_lines = left_match[0] - left_nr
             if match(base, right, base_nr, right_nr, left_changed_lines) == left_changed_lines
               # right is unchanged
-              result.append(left[left_nr .. left_match[1]])
+              result.concat(left[left_nr .. left_match[1]])
               base_nr = left_match[0]
               left_nr = left_match[1]
               right_nr += left_changed_lines
@@ -80,9 +80,9 @@ module Dyph3
               raise "Can we even get here? We already determined right didn't change"
               base_m, left_m, right_m = tripple_match(base, left, right, left_match, right_match)
               result << left_marker
-              result.append(left[left_nr .. left_m])
+              result.concat(left[left_nr .. left_m])
               result << separator_marker
-              result.append(right[right_nr .. right_m])
+              result.concat(right[right_nr .. right_m])
               result << right_marker
               base_nr, left_nr, right_nr = base_m, left_m, right_m
             end
@@ -95,10 +95,10 @@ module Dyph3
         # all finished, pass
       elsif base_nr == base_len && left_nr == left_len
         # right added lines
-        result.append(right[right_nr .. -1])
+        result.concat(right[right_nr .. -1])
       elsif base_nr == base_len && right_nr == right_len
         # left added lines
-        result.append(left[left_nr .. -1])
+        result.concat(left[left_nr .. -1])
       elsif (right_nr == right_len && (base_len - base_nr == left_len - left_nr) && match(base, left, base_nr, left_nr, base_len - base_nr) == base_len - base_nr)
         # right deleted lines, pass
       elsif (left_nr == left_len && (base_len - base_nr == right_len - right_nr) && match(base, right, base_nr, right_nr, base_len - base_nr) == base_len - base_nr)
@@ -106,17 +106,115 @@ module Dyph3
       else
         # conflict
         if right == left      # BUGBUG should this be checking a subset of these arrays??
-          result.append(right[right_nr .. -1])
+          result.concat(right[right_nr .. -1])
         else
           result << left_marker
-          result.append(left[left_nr .. -1])
+          result.concat(left[left_nr .. -1])
           result << separator_marker
-          result.append(right[right_nr .. -1])
+          result.concat(right[right_nr .. -1])
           result << right_marker
         end
       end
       
       return result
     end
+    
+    private
+      # find next matching pattern unchanged in both left and right
+      # return the position in all three lists
+      def self.triple_match(base, left, right, left_match, right_match)
+        while true
+          difference = right_match[0] - left_match[0]
+          if difference > 0
+            # right changed more lines
+            
+            match_len = match(base, left, left_match[0], left_match[1], difference)
+            if match_len == difference
+              return right_match[0], left_match[1] + difference, right_match[1]
+            else
+              left_match = find_match(base, left, left_match[0] + match_len, left_match[1] + match_len)
+            end
+          elsif difference < 0
+            # left changed more lines
+            
+            difference = -1 * difference
+            match_len = match(base, right, right_match[0], right_match[1], difference)
+            if match_len == difference
+              return [left_match[0], left_match[1], right_match[0] + difference]
+            else
+              right_match = find_match(base, right, right_match[0] + match_len, right_match[1] + match_len)
+            end
+          else
+            # both conflicts change same number of lines or no match till the end
+            
+            return right_match[0], left_match[1], right_match[1]
+          end
+        end
+      end
+
+      # return the number matching items after the given positions
+      # maximum maxcount lines are are processed
+      def self.match(list1, list2, nr1, nr2, maxcount=3)
+        i = 0
+        len1 = list1.length
+        len2 = list2.length
+        while nr1 < len1 && nr2 < len2 && list1[nr1] == list2[nr2]
+          nr1 += 1
+          nr2 += 1
+          i += 1
+          if i >= maxcount && maxcount > 0
+            break
+          end
+        end
+        return i
+      end
+
+      # searches next matching pattern with length mincount
+      # if no pattern is found len of the both lists is returned
+      def self.find_match(list1, list2, nr1, nr2, mincount=3)
+        len1 = list1.length
+        len2 = list2.length
+        hit1 = nil
+        hit2 = nil
+        idx1 = nr1
+        idx2 = nr2
+
+        while (idx1 < len1) || (idx2 < len2)
+          i = nr1
+          while i <= idx1
+            hit_count = match(list1, list2, i, idx2, mincount)
+            if hit_count >= mincount
+              hit1 = [i, idx2]
+              break
+            end
+            i += 1
+          end
+
+          i = nr2
+          while i < idx2
+            hit_count = match(list1, list2, idx1, i, mincount)
+            if hit_count >= mincount
+              hit2 = [idx1, i]
+              break
+            end
+            i += 1
+          end
+
+          break if hit1 || hit2
+          idx1 += 1 if idx1 < len1
+          idx2 += 1 if idx2 < len2
+        end
+        
+        if hit1 && hit2
+          # XXX which one?
+          return hit1
+        elsif hit1
+          return hit1
+        elsif hit2
+          return hit2
+        else
+          return [len1, len2]
+        end
+      end
   end
 end
