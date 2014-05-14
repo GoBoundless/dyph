@@ -1,11 +1,17 @@
 require "dyph3"
 require "pry"
+require "awesome_print"
 
 describe Dyph3::Differ do
   let(:base) { <<-TEXT
 This is the baseline.
 The start.
 The end.
+cats
+dogs
+pigs
+cows
+chickens
 TEXT
 }
 
@@ -13,6 +19,11 @@ TEXT
 This is the baseline.
 The start (changed by A).
 The end.
+cats
+dogs
+pigs
+cows
+chickens
 TEXT
 }
 
@@ -21,10 +32,16 @@ This is the baseline.
 The start.
 B added this line.
 The end.
+cats
+dogs
+pigs
+cows
+chickens
 TEXT
 }
 
-  let(:expected_result) { <<-TEXT
+  let(:expected_result) {
+    r = <<-TEXT
 This is the baseline.
 <<<<<<< start
 The start (changed by A).
@@ -33,7 +50,13 @@ The start.
 B added this line.
 >>>>>>> changed_b
 The end.
+cats
+dogs
+pigs
+cows
+chickens
 TEXT
+  r.strip
 }
 
   it "should not explode" do
