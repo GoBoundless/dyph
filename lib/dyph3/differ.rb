@@ -51,7 +51,7 @@ module Dyph3
             if match(base, left, base_nr, left_nr, right_changed_lines) == right_changed_lines
               # left is unchanged
               
-              result.concat(right[right_nr .. right_match[1] - 1])
+              result.concat(right[right_nr ... right_match[1]])
               base_nr = right_match[0]
               right_nr = right_match[1]
               left_nr += right_changed_lines
@@ -60,9 +60,9 @@ module Dyph3
               
               base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
               result << left_marker
-              result.concat(left[left_nr .. left_m - 1])
+              result.concat(left[left_nr ... left_m])
               result << separator_marker
-              result.concat(right[right_nr .. right_m - 1])
+              result.concat(right[right_nr ... right_m])
               result << right_marker
               base_nr, left_nr, right_nr = base_m, left_m, right_m
             end
@@ -71,7 +71,7 @@ module Dyph3
             left_changed_lines = left_match[0] - left_nr
             if match(base, right, base_nr, right_nr, left_changed_lines) == left_changed_lines
               # right is unchanged
-              result.concat(left[left_nr .. left_match[1] - 1])
+              result.concat(left[left_nr ... left_match[1]])
               base_nr = left_match[0]
               left_nr = left_match[1]
               right_nr += left_changed_lines
@@ -80,9 +80,9 @@ module Dyph3
               raise "Can we even get here? We already determined right didn't change"
               base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
               result << left_marker
-              result.concat(left[left_nr .. left_m - 1])
+              result.concat(left[left_nr ... left_m])
               result << separator_marker
-              result.concat(right[right_nr .. right_m - 1])
+              result.concat(right[right_nr ... right_m])
               result << right_marker
               base_nr, left_nr, right_nr = base_m, left_m, right_m
             end
