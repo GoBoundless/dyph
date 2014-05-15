@@ -74,6 +74,6 @@ TEXT
   it "should not be conflicted when not conflicted" do
     result_hash = Dyph3::Differ.text_diff3(base, base, base, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
     expect(result_hash[:result]).to eq base.strip #BUGBUG: differ losing a new line?
-    expect(result_hash[:conflicted]).to be_fase
+    expect(result_hash[:conflicted]).to be_false
   end
 end
