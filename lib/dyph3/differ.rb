@@ -1,7 +1,7 @@
 module Dyph3
   class Differ
     # Algorithm adapted from http://hg.moinmo.in/moin/2.0/file/4a997d9f5e26/MoinMoin/util/diff3.py
-    
+
     DEFAULT_OPTIONS = {
       markers: {
         left:       "<<<<<<<<<<<<<<<<<<<<<<<<<",
@@ -9,29 +9,29 @@ module Dyph3
         right:      ">>>>>>>>>>>>>>>>>>>>>>>>>"
       }
     }
-    
+
     def self.text_diff3(base, left, right, options={})
       base_lines = base.split("\n")
       left_lines = left.split("\n")
       right_lines = right.split("\n")
-      
-      results = diff3(base_lines, left_lines, right_lines, options)
-      
-      results.join("\n")
+
+      results_hash = diff3(base_lines, left_lines, right_lines, options)
+      { result: results_hash[:result].join("\n"), conflicted: results_hash[:conflicted] }
     end
-    
+
     def self.diff3(base, left, right, options={})
+      conflicted = false
       options = DEFAULT_OPTIONS.merge(options)
-      
+
       left_marker = options[:markers][:left]
       separator_marker = options[:markers][:separator]
       right_marker = options[:markers][:right]
-      
-      
+
+
       base_nr, left_nr, right_nr = 0, 0, 0
       base_len, left_len, right_len = base.length, left.length, right.length
       result = []
-      
+
       while base_nr < base_len && left_nr < left_len && right_nr < right_len
         # unchanged
         if base[base_nr] == left[left_nr] && base[base_nr] == right[right_nr]
@@ -42,28 +42,35 @@ module Dyph3
         else
           right_match = find_match(base, right, base_nr, right_nr)
           left_match = find_match(base, left, base_nr, left_nr)
-          
+
           if right_match[0] != base_nr || right_match[1] != right_nr
             # right is changed
 
             right_changed_lines = right_match[0] - base_nr
-            
+
             if match(base, left, base_nr, left_nr, right_changed_lines) == right_changed_lines
               # left is unchanged
-              
+
               result.concat(right[right_nr ... right_match[1]])
               base_nr = right_match[0]
               right_nr = right_match[1]
               left_nr += right_changed_lines
             else
               # both changed, conflict
-              
               base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
-              result << left_marker
-              result.concat(left[left_nr ... left_m])
-              result << separator_marker
-              result.concat(right[right_nr ... right_m])
-              result << right_marker
+              left_change = left[left_nr ... left_m]
+              right_change = right[right_nr ... right_m]
+              if left_change == right_change
+                #both changed but have the same change
+                result.concat(left_change)
+              else
+                result << left_marker
+                result.concat(left_change)
+                result << separator_marker
+                result.concat(right_change)
+                result << right_marker
+                conflicted = true
+              end
               base_nr, left_nr, right_nr = base_m, left_m, right_m
             end
           else
@@ -85,6 +92,7 @@ module Dyph3
               result.concat(right[right_nr ... right_m])
               result << right_marker
               base_nr, left_nr, right_nr = base_m, left_m, right_m
+              conflicted = true
             end
           end
         end
@@ -113,12 +121,13 @@ module Dyph3
           result << separator_marker
           result.concat(right[right_nr .. -1])
           result << right_marker
+          conflicted = true
         end
       end
-      
-      return result
+
+      return { result: result, conflicted: conflicted }
     end
-    
+
     private
       # find next matching pattern unchanged in both left and right
       # return the position in all three lists
@@ -127,7 +136,7 @@ module Dyph3
           difference = right_match[0] - left_match[0]
           if difference > 0
             # right changed more lines
-            
+
             match_len = match(base, left, left_match[0], left_match[1], difference)
             if match_len == difference
               return right_match[0], left_match[1] + difference, right_match[1]
@@ -136,7 +145,7 @@ module Dyph3
             end
           elsif difference < 0
             # left changed more lines
-            
+
             difference = -1 * difference
             match_len = match(base, right, right_match[0], right_match[1], difference)
             if match_len == difference
@@ -146,7 +155,7 @@ module Dyph3
             end
           else
             # both conflicts change same number of lines or no match till the end
-            
+
             return right_match[0], left_match[1], right_match[1]
           end
         end
@@ -204,7 +213,7 @@ module Dyph3
           idx1 += 1 if idx1 < len1
           idx2 += 1 if idx2 < len2
         end
-        
+
         if hit1 && hit2
           # XXX which one?
           return hit1
