@@ -65,9 +65,9 @@ module Dyph3
                 result.concat(left_change)
               else
                 result << left_marker
-                result.concat(left[left_nr ... left_m])
+                result.concat(left_change)
                 result << separator_marker
-                result.concat(right[right_nr ... right_m])
+                result.concat(right_change)
                 result << right_marker
                 conflicted = true
               end
