@@ -1,229 +1,280 @@
 module Dyph3
   class Differ
-    # Algorithm adapted from http://hg.moinmo.in/moin/2.0/file/4a997d9f5e26/MoinMoin/util/diff3.py
+    # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
     DEFAULT_OPTIONS = {
       markers: {
-        left:       "<<<<<<<<<<<<<<<<<<<<<<<<<",
-        separator:  "=========================",
-        right:      ">>>>>>>>>>>>>>>>>>>>>>>>>"
       }
     }
 
-    def self.text_diff3(base, left, right, options={})
-      base_lines = base.split("\n")
-      left_lines = left.split("\n")
-      right_lines = right.split("\n")
-
-      results_hash = diff3(base_lines, left_lines, right_lines, options)
-      { result: results_hash[:result].join("\n"), conflicted: results_hash[:conflicted] }
-    end
-
-    def self.diff3(base, left, right, options={})
-      conflicted = false
-      options = DEFAULT_OPTIONS.merge(options)
-
-      left_marker = options[:markers][:left]
-      separator_marker = options[:markers][:separator]
-      right_marker = options[:markers][:right]
-
-
-      base_nr, left_nr, right_nr = 0, 0, 0
-      base_len, left_len, right_len = base.length, left.length, right.length
-      result = []
-
-      while base_nr < base_len && left_nr < left_len && right_nr < right_len
-        # unchanged
-        if base[base_nr] == left[left_nr] && base[base_nr] == right[right_nr]
-          result << base[base_nr]
-          base_nr += 1
-          left_nr += 1
-          right_nr += 1
+    # Three-way diff based on the GNU diff3.c by R. Smith.
+    #   @param [in] yourtext    Array of lines of your text.
+    #   @param [in] origtext    Array of lines of original text.
+    #   @param [in] theirtext   Array of lines of their text.
+    #   @returns Array of tuples containing diff results. The tuples consist of
+    #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
+    #        '0', '1', '2', or 'A'.
+    def self.diff3(yourtext, origtext, theirtext)
+      # diff result => [(cmd, loA, hiA, loB, hiB), ...]
+      d2 = [diff(origtext, yourtext), diff(origtext, theirtext)]
+      d3 = []
+      r3 = [nil,  0, 0,  0, 0,  0, 0]
+      
+      while d2[0] || d2[1]
+        # find a continual range in origtext lo2..hi2
+        # changed by yourtext or by theirtext.
+        #
+        #     d2[0]        222    222222222
+        #  origtext     ...L!!!!!!!!!!!!!!!!!!!!H...
+        #     d2[1]          222222   22  2222222
+        r2 = [[], []]
+        if !d2[0]
+          i = 1
         else
-          right_match = find_match(base, right, base_nr, right_nr)
-          left_match = find_match(base, left, base_nr, left_nr)
-
-          if right_match[0] != base_nr || right_match[1] != right_nr
-            # right is changed
-
-            right_changed_lines = right_match[0] - base_nr
-
-            if match(base, left, base_nr, left_nr, right_changed_lines) == right_changed_lines
-              # left is unchanged
-
-              result.concat(right[right_nr ... right_match[1]])
-              base_nr = right_match[0]
-              right_nr = right_match[1]
-              left_nr += right_changed_lines
-            else
-              # both changed, conflict
-              base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
-              left_change = left[left_nr ... left_m]
-              right_change = right[right_nr ... right_m]
-              if left_change == right_change
-                #both changed but have the same change
-                result.concat(left_change)
-              else
-                result << left_marker
-                result.concat(left_change)
-                result << separator_marker
-                result.concat(right_change)
-                result << right_marker
-                conflicted = true
-              end
-              base_nr, left_nr, right_nr = base_m, left_m, right_m
-            end
+          if !d2[1]
+            i = 0
           else
-            # left is changed
-            left_changed_lines = left_match[0] - left_nr
-            if match(base, right, base_nr, right_nr, left_changed_lines) == left_changed_lines
-              # right is unchanged
-              result.concat(left[left_nr ... left_match[1]])
-              base_nr = left_match[0]
-              left_nr = left_match[1]
-              right_nr += left_changed_lines
+            if d2[0][0][1] <= d2[1][0][1]
+              i = 0
             else
-              # both changed, conflict!
-              raise "Can we even get here? We already determined right didn't change"
-              base_m, left_m, right_m = triple_match(base, left, right, left_match, right_match)
-              result << left_marker
-              result.concat(left[left_nr ... left_m])
-              result << separator_marker
-              result.concat(right[right_nr ... right_m])
-              result << right_marker
-              base_nr, left_nr, right_nr = base_m, left_m, right_m
-              conflicted = true
+              i = 1
             end
           end
         end
-      end
-
-      # process tail
-      if base_nr == base_len && left_nr == left_len && right_nr == right_len
-        # all finished, pass
-      elsif base_nr == base_len && left_nr == left_len
-        # right added lines
-        result.concat(right[right_nr .. -1])
-      elsif base_nr == base_len && right_nr == right_len
-        # left added lines
-        result.concat(left[left_nr .. -1])
-      elsif (right_nr == right_len && (base_len - base_nr == left_len - left_nr) && match(base, left, base_nr, left_nr, base_len - base_nr) == base_len - base_nr)
-        # right deleted lines, pass
-      elsif (left_nr == left_len && (base_len - base_nr == right_len - right_nr) && match(base, right, base_nr, right_nr, base_len - base_nr) == base_len - base_nr)
-        # left deleted lines, pass
-      else
-        # conflict
-        if right == left      # BUGBUG should this be checking a subset of these arrays??
-          result.concat(right[right_nr .. -1])
+        j  = i
+        k  = i ^ 1   # xor
+        hi = d2[j][0][2]
+        r2[j] << d2[j].pop
+        while d2[k] && (d2[k][0][1] <= hi + 1)
+          hi_k = d2[k][0][2]
+          r2[k] << d2[k].pop
+          if hi < hi_k
+            hi = hi_k
+            j  = k
+            k  = k ^ 1      # xor
+          end
+        end
+        lo2 = r2[i][ 0][1]
+        hi2 = r2[j][-1][2]
+        
+        # take the corresponding ranges in yourtext lo0..hi0
+        # and in theirtext lo1..hi1.
+        #
+        #   yourtext     ..L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H...
+        #      d2[0]        222    222222222
+        #   origtext     ...00!1111!000!!00!111111...
+        #      d2[1]          222222   22  2222222
+        #  theirtext          ...L!!!!!!!!!!!!!!!!H...
+        if r2[0]
+          lo0 = r2[0][ 0][3] - r2[0][ 0][1] + lo2
+          hi0 = r2[0][-1][4] - r2[0][-1][2] + hi2
         else
-          result << left_marker
-          result.concat(left[left_nr .. -1])
-          result << separator_marker
-          result.concat(right[right_nr .. -1])
-          result << right_marker
-          conflicted = true
+          lo0 = r3[2] - r3[6] + lo2
+          hi0 = r3[2] - r3[6] + hi2
+        end
+        if r2[1]
+          lo1 = r2[1][ 0][3] - r2[1][ 0][1] + lo2
+          hi1 = r2[1][-1][4] - r2[1][-1][2] + hi2
+        else
+          lo1 = r3[4] - r3[6] + lo2
+          hi1 = r3[4] - r3[6] + hi2
+        end
+        
+        # detect type of changes
+        if !r2[0]
+          cmd = '1'
+        elsif not r2[1]
+          cmd = '0'
+        elsif hi0 - lo0 != hi1 - lo1
+          cmd = 'A'
+        else
+          cmd = '2'
+          for d in range(0, hi0 - lo0 + 1)
+            (i0, i1) = [lo0 + d - 1, lo1 + d - 1]
+            ok0 = (0 <= i0 && i0 < yourtext.length)
+            ok1 = (0 <= i1 && i1 < theirtext.length)
+            if (ok0 ^ ok1) || (ok0 && yourtext[i0] != theirtext[i1])
+              cmd = 'A'
+              break
+            end
+          end
+        end
+        d3 << [cmd,  lo0, hi0,  lo1, hi1,  lo2, hi2]
+      end
+      
+      d3
+    end
+    
+    def self.merge(yourtext, origtext, theirtext)
+      res = {conflict: 0, body: []}
+      d3 = diff3(yourtext, origtext, theirtext)
+      text3 = [yourtext, theirtext, origtext]
+      i2 = 1
+      d3.each do |r3|
+        (i2 .. r3[5]).each do |lineno|                  # exclusive (..)
+          res[:body] << text3[2][lineno - 1]
+        end
+        
+        if r3[0] == '0'
+          (r3[1] ... r3[2]).each do |lineno|            # inclusive (...)
+            res[:body] << text3[0][lineno - 1]
+          end
+        elsif r3[0] != 'A'
+          (r3[3] ... r3[4]).each do |lineno|            # inclusive (...)
+            res[:body] << text3[1][lineno - 1]
+          end
+        else
+          res = _conflict_range(text3, r3, res)
+        end
+        i2 = r3[6] + 1
+      end
+      
+      (i2 ... text3[2].length).each do |lineno|         # inclusive (...)
+        res[:body] << text3[2][lineno - 1]
+      end
+      
+      res
+    end
+    
+    # Two-way diff based on the algorithm by P. Heckel.
+    # @param [in] text_a Array of lines of first text.
+    # @param [in] text_b Array of lines of second text.
+    # @returns TODO
+    def self.diff(text_a, text_b)
+      d    = []
+      uniq = [[text_a.length, text_b.length]]
+      
+      (freq, ap, bp) = [{}, {}, {}]
+      text_a.length.times do |i|
+        s = text_a[i]
+        freq[s] ||= 0
+        freq[s] += 2
+        ap  [s] = i
+      end
+      text_b.length.times do |i|
+        s = text_b[i]
+        freq[s] ||= 0
+        freq[s] += 3
+        bp  [s] = i
+      end
+      freq.each do |s, x|
+        if x == 5
+          uniq << [ap[s], bp[s]]
         end
       end
-
-      return { result: result, conflicted: conflicted }
+      
+      (freq, ap, bp) = [{}, {}, {}]
+      uniq.sort!{|a, b| a[0] <=> b[0]}
+      (a1, b1) = [0, 0]
+      while a1 < text_a.length && b1 < text_b.length
+        if text_a[a1] != text_b[b1]
+          break
+        end
+        a1 += 1
+        b1 += 1
+      end
+      
+      uniq.each do |a_uniq, b_uniq|
+        if a_uniq < a1 || b_uniq < b1
+          next
+        end
+        (a0, b0) = [a1, b1]
+        (a1, b1) = [a_uniq - 1, b_uniq - 1]
+        while a0 <= a1 && b0 <= b1
+          if text_a[a1] != text_b[b1]
+            break
+          end
+          a1 -= 1
+          b1 -= 1
+        end
+        if a0 <= a1 && b0 <= b1
+          d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
+        elsif a0 <= a1
+          d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
+        elsif b0 <= b1
+          d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
+        end
+        (a1, b1) = [a_uniq + 1, b_uniq + 1]
+        while a1 < text_a.length && b1 < text_b.length
+          if text_a[a1] != text_b[b1]
+            break
+          end
+          a1 += 1
+          b1 += 1
+        end
+      end
+      
+      d
     end
 
     private
-      # find next matching pattern unchanged in both left and right
-      # return the position in all three lists
-      def self.triple_match(base, left, right, left_match, right_match)
-        while true
-          difference = right_match[0] - left_match[0]
-          if difference > 0
-            # right changed more lines
-
-            match_len = match(base, left, left_match[0], left_match[1], difference)
-            if match_len == difference
-              return right_match[0], left_match[1] + difference, right_match[1]
-            else
-              left_match = find_match(base, left, left_match[0] + match_len, left_match[1] + match_len)
-            end
-          elsif difference < 0
-            # left changed more lines
-
-            difference = -1 * difference
-            match_len = match(base, right, right_match[0], right_match[1], difference)
-            if match_len == difference
-              return [left_match[0], left_match[1], right_match[0] + difference]
-            else
-              right_match = find_match(base, right, right_match[0] + match_len, right_match[1] + match_len)
-            end
-          else
-            # both conflicts change same number of lines or no match till the end
-
-            return right_match[0], left_match[1], right_match[1]
-          end
+      def self._conflict_range(text3, r3, res)
+        text_a = [] # their text
+        (r3[3] ... r3[4]).each do |i|                   # inclusive(...)
+          text_a << text3[1][i - 1]
         end
+        text_b = [] # your text
+        (r3[1] ... r3[2]).each do |i|                   # inclusive(...)
+          text_b << text3[0][i - 1]
+        end
+        d = diff(text_a, text_b)
+        if _assoc_range(d, 'c') && r3[5] <= r3[6]
+          res[:conflict] += 1
+          res[:body] << '<<<<<<<'
+          (r3[1] ... r3[2]).each do |lineno|
+            res[:body] << text3[0][lineno - 1]
+          end
+          res[:body] << '|||||||'
+          (r3[5] ... r3[6]).each do |lineno|
+            res[:body] << text3[2][lineno - 1]
+          end
+          res[:body] << '======='
+          (r3[3] ... r3[4]).each do |lineno|
+            res[:body] << text3[1][lineno - 1]
+          end
+          res[:body] << '>>>>>>>'
+          return res
+        end
+        
+        ia = 1
+        d.each do |r2|
+          (ia .. r2[1]).each do |lineno|
+            res[:body] << text_a[lineno - 1]
+          end
+          if r2[0] == 'c'
+            res[:conflict] += 1
+            res[:body] << '<<<<<<<'
+            (r2[3] ... r2[4]).each do |lineno|
+              res[:body] << text_b[lineno - 1]
+            end
+            res[:body] << '======='
+            (r2[1] ... r2[2]).each do |lineno|
+              res[:body] << text_a[lineno - 1]
+            end
+            res[:body] << '>>>>>>>'
+          elsif r2[0] == 'a'
+            (r2[3] ... r2[4]).each do |lineno|
+              res[:body] << text_b[lineno - 1]
+            end
+          end
+          ia = r2[2] + 1
+        end
+        
+        (ia .. text_a.length).each do |lineno|
+          res[:body] << text_a[lineno - 1]
+        end
+        
+        res
       end
-
-      # return the number matching items after the given positions
-      # maximum maxcount lines are are processed
-      def self.match(list1, list2, nr1, nr2, maxcount=3)
-        i = 0
-        len1 = list1.length
-        len2 = list2.length
-        while nr1 < len1 && nr2 < len2 && list1[nr1] == list2[nr2]
-          nr1 += 1
-          nr2 += 1
-          i += 1
-          if i >= maxcount && maxcount > 0
-            break
+      
+      def self._assoc_range(diff, diff_type)
+        diff.each do |d|
+          if d[0] == diff_type
+            return d
           end
         end
-        return i
-      end
-
-      # searches next matching pattern with length mincount
-      # if no pattern is found len of the both lists is returned
-      def self.find_match(list1, list2, nr1, nr2, mincount=3)
-        len1 = list1.length
-        len2 = list2.length
-        hit1 = nil
-        hit2 = nil
-        idx1 = nr1
-        idx2 = nr2
-
-        while (idx1 < len1) || (idx2 < len2)
-          i = nr1
-          while i <= idx1
-            hit_count = match(list1, list2, i, idx2, mincount)
-            if hit_count >= mincount
-              hit1 = [i, idx2]
-              break
-            end
-            i += 1
-          end
-
-          i = nr2
-          while i < idx2
-            hit_count = match(list1, list2, idx1, i, mincount)
-            if hit_count >= mincount
-              hit2 = [idx1, i]
-              break
-            end
-            i += 1
-          end
-
-          break if hit1 || hit2
-          idx1 += 1 if idx1 < len1
-          idx2 += 1 if idx2 < len2
-        end
-
-        if hit1 && hit2
-          # XXX which one?
-          return hit1
-        elsif hit1
-          return hit1
-        elsif hit2
-          return hit2
-        else
-          return [len1, len2]
-        end
+        
+        nil
       end
   end
 end

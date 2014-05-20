@@ -59,14 +59,21 @@ TEXT
   r.strip
 }
 
+  it "should be tested" do
+    result = Dyph3::Differ.diff3(left, base, right)
+    
+    ap result
+    binding.pry
+  end
+
   it "should not explode" do
-    result_hash = Dyph3::Differ.text_diff3(base, left, right, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
+    result_hash = Dyph3::Differ.text_diff3(left, base, right, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
     expect(result_hash[:conflicted]).to be_true
     expect(result_hash[:result]).to eq expected_result
   end
 
   it "should not be conflicted when not conflicted" do
-    result_hash = Dyph3::Differ.text_diff3(base, left, left, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
+    result_hash = Dyph3::Differ.text_diff3(left, base, left, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
     expect(result_hash[:result]).to eq left.strip #BUGBUG: differ losing a new line?
     expect(result_hash[:conflicted]).to be_false
   end
