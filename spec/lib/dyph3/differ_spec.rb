@@ -43,12 +43,14 @@ TEXT
   let(:expected_result) {
     r = <<-TEXT
 This is the baseline.
-<<<<<<< start
+<<<<<<<
 The start (changed by A).
+|||||||
+The start.
 =======
 The start.
 B added this line.
->>>>>>> changed_b
+>>>>>>>
 The end.
 cats
 dogs
@@ -60,10 +62,9 @@ TEXT
 }
 
   it "should be tested" do
-    result = Dyph3::Differ.diff3(left, base, right)
-    
+    result = Dyph3::Differ.merge_text(left, base, right)
     ap result
-    binding.pry
+    
   end
 
   it "should not explode" do

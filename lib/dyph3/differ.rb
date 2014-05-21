@@ -6,6 +6,16 @@ module Dyph3
       markers: {
       }
     }
+    
+    def self.diff3_text(yourtext, original, theirtext)
+      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
+    end
+    
+    def self.merge_text(yourtext, original, theirtext)
+      merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
+    end
+    
+    
 
     # Three-way diff based on the GNU diff3.c by R. Smith.
     #   @param [in] yourtext    Array of lines of your text.
@@ -23,7 +33,7 @@ module Dyph3
       d3 = []
       r3 = [nil,  0, 0,  0, 0,  0, 0]
       
-      while d2[:your] || d2[:their]
+      while d2[:your].length >0 || d2[:their].length > 0
         # find a continual range in origtext lo2..hi2
         # changed by yourtext or by theirtext.
         #
@@ -59,7 +69,7 @@ module Dyph3
         
         hi = d2[j_target][0][2]
         r2[j_target] << d2[j_target].pop
-        while d2[k_target] && (d2[k_target][0][1] <= hi + 1)
+        while d2[k_target].length > 0 && (d2[k_target][0][1] <= hi + 1)
           hi_k = d2[k_target][0][2]
           r2[k_target] << d2[k_target].pop
           if hi < hi_k
@@ -160,14 +170,12 @@ module Dyph3
       uniq = [[text_a.length, text_b.length]]
       
       (freq, ap, bp) = [{}, {}, {}]
-      text_a.length.times do |i|
-        s = text_a[i]
+      text_a.each_with_index do |s, i|
         freq[s] ||= 0
         freq[s] += 2
         ap  [s] = i
       end
-      text_b.length.times do |i|
-        s = text_b[i]
+      text_b.each_with_index do |s, i|
         freq[s] ||= 0
         freq[s] += 3
         bp  [s] = i
@@ -193,8 +201,8 @@ module Dyph3
         if a_uniq < a1 || b_uniq < b1
           next
         end
-        (a0, b0) = [a1, b1]
-        (a1, b1) = [a_uniq - 1, b_uniq - 1]
+        a0, b0 = [a1, b1]
+        a1, b1 = [a_uniq - 1, b_uniq - 1]
         while a0 <= a1 && b0 <= b1
           if text_a[a1] != text_b[b1]
             break
@@ -209,7 +217,7 @@ module Dyph3
         elsif b0 <= b1
           d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
         end
-        (a1, b1) = [a_uniq + 1, b_uniq + 1]
+        a1, b1 = [a_uniq + 1, b_uniq + 1]
         while a1 < text_a.length && b1 < text_b.length
           if text_a[a1] != text_b[b1]
             break
@@ -260,22 +268,23 @@ module Dyph3
         end
         
         ia = 1
+        
         d.each do |r2|
-          (ia .. r2[:their]).each do |lineno|
+          (ia .. r2[1]).each do |lineno|
             res[:body] << text_a[lineno - 1]
           end
-          if r2[:your] == 'c'
+          if r2[0] == 'c'
             res[:conflict] += 1
             res[:body] << '<<<<<<<'
             (r2[3] ... r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
             end
             res[:body] << '======='
-            (r2[:their] ... r2[2]).each do |lineno|
+            (r2[1] ... r2[2]).each do |lineno|
               res[:body] << text_a[lineno - 1]
             end
             res[:body] << '>>>>>>>'
-          elsif r2[:your] == 'a'
+          elsif r2[0] == 'a'
             (r2[3] ... r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
             end
