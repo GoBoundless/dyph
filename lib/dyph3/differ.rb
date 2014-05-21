@@ -59,10 +59,10 @@ module Dyph3
           their: []
         }
         
-        if !d2[:your]
+        if d2[:your].empty?
           i_target = :their
         else
-          if !d2[:their]
+          if d2[:their].empty?
             i_target = :your
           else
             if d2[:your][0][1] <= d2[:their][0][1]
@@ -99,14 +99,14 @@ module Dyph3
         #   origtext     ..00!1111!000!!00!111111..
         #   d2[:their]        222222   22  2222222
         #  theirtext          ..L!!!!!!!!!!!!!!!!H..
-        if r2[:your]
+        if !r2[:your].empty?
           lo0 = r2[:your][ 0][3] - r2[:your][ 0][1] + lo2
           hi0 = r2[:your][-1][4] - r2[:your][-1][2] + hi2
         else
           lo0 = r3[2] - r3[6] + lo2
           hi0 = r3[2] - r3[6] + hi2
         end
-        if r2[:their]
+        if !r2[:their].empty?
           lo1 = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
           hi1 = r2[:their][-1][4] - r2[:their][-1][2] + hi2
         else
@@ -115,9 +115,9 @@ module Dyph3
         end
         
         # detect type of changes
-        if r2[:your].length == 0
+        if r2[:your].empty?
           cmd = '1'
-        elsif r2[:their].length == 0
+        elsif r2[:their].empty?
           cmd = '0'
         elsif hi0 - lo0 != hi1 - lo1
           cmd = 'A'
