@@ -8,7 +8,8 @@ module Dyph3
         base: "|||||||",
         right: "=======",
         close: ">>>>>>>"
-      }
+      },
+      include_base: true
     }
     
     def self.diff3_text(yourtext, original, theirtext, options={})
@@ -16,7 +17,11 @@ module Dyph3
     end
     
     def self.merge_text(yourtext, original, theirtext, options={})
-      merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
+      result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
+      
+      result[:body] = result[:body].join("\n")
+      
+      result
     end
     
     
@@ -262,9 +267,11 @@ module Dyph3
           (r3[1] .. r3[2]).each do |lineno|
             res[:body] << text3[0][lineno - 1]
           end
-          res[:body] << options[:markers][:base]
-          (r3[5] .. r3[6]).each do |lineno|
-            res[:body] << text3[2][lineno - 1]
+          if options[:include_base]
+            res[:body] << options[:markers][:base]
+            (r3[5] .. r3[6]).each do |lineno|
+              res[:body] << text3[2][lineno - 1]
+            end
           end
           res[:body] << options[:markers][:right]
           (r3[3] .. r3[4]).each do |lineno|
