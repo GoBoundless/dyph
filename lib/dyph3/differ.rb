@@ -16,80 +16,95 @@ module Dyph3
     #        '0', '1', '2', or 'A'.
     def self.diff3(yourtext, origtext, theirtext)
       # diff result => [(cmd, loA, hiA, loB, hiB), ...]
-      d2 = [diff(origtext, yourtext), diff(origtext, theirtext)]
+      d2 = {
+        your: diff(origtext, yourtext),
+        their: diff(origtext, theirtext)
+      }
       d3 = []
       r3 = [nil,  0, 0,  0, 0,  0, 0]
       
-      while d2[0] || d2[1]
+      while d2[:your] || d2[:their]
         # find a continual range in origtext lo2..hi2
         # changed by yourtext or by theirtext.
         #
-        #     d2[0]        222    222222222
-        #  origtext     ...L!!!!!!!!!!!!!!!!!!!!H...
-        #     d2[1]          222222   22  2222222
-        r2 = [[], []]
-        if !d2[0]
-          i = 1
+        #     d2[:your]            222    222222222
+        #  origtext             ...L!!!!!!!!!!!!!!!!!!!!H...
+        #     d2[:their]             222222   22  2222222
+        
+        i_target = nil
+        j_target = nil
+        k_target = nil
+        
+        r2 = {
+          your: [],
+          their: []
+        }
+        
+        if !d2[:your]
+          i_target = :their
         else
-          if !d2[1]
-            i = 0
+          if !d2[:their]
+            i_target = :your
           else
-            if d2[0][0][1] <= d2[1][0][1]
-              i = 0
+            if d2[:your][0][1] <= d2[:their][0][1]
+              i_target = :your
             else
-              i = 1
+              i_target = :their
             end
           end
         end
-        j  = i
-        k  = i ^ 1   # xor
-        hi = d2[j][0][2]
-        r2[j] << d2[j].pop
-        while d2[k] && (d2[k][0][1] <= hi + 1)
-          hi_k = d2[k][0][2]
-          r2[k] << d2[k].pop
+        
+        j_target = i_target
+        k_target = invert_target(i_target)
+        
+        hi = d2[j_target][0][2]
+        r2[j_target] << d2[j_target].pop
+        while d2[k_target] && (d2[k_target][0][1] <= hi + 1)
+          hi_k = d2[k_target][0][2]
+          r2[k_target] << d2[k_target].pop
           if hi < hi_k
             hi = hi_k
-            j  = k
-            k  = k ^ 1      # xor
+            
+            j_target = k_target
+            k_target = invert_target(k_target)
           end
         end
-        lo2 = r2[i][ 0][1]
-        hi2 = r2[j][-1][2]
+        lo2 = r2[i_target][ 0][1]
+        hi2 = r2[j_target][-1][2]
         
         # take the corresponding ranges in yourtext lo0..hi0
         # and in theirtext lo1..hi1.
         #
         #   yourtext     ..L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H...
-        #      d2[0]        222    222222222
+        #   d2[:your]       222    222222222
         #   origtext     ...00!1111!000!!00!111111...
-        #      d2[1]          222222   22  2222222
+        #   d2[:their]        222222   22  2222222
         #  theirtext          ...L!!!!!!!!!!!!!!!!H...
-        if r2[0]
-          lo0 = r2[0][ 0][3] - r2[0][ 0][1] + lo2
-          hi0 = r2[0][-1][4] - r2[0][-1][2] + hi2
+        if r2[:your]
+          lo0 = r2[:your][ 0][3] - r2[:your][ 0][1] + lo2
+          hi0 = r2[:your][-1][4] - r2[:your][-1][2] + hi2
         else
           lo0 = r3[2] - r3[6] + lo2
           hi0 = r3[2] - r3[6] + hi2
         end
-        if r2[1]
-          lo1 = r2[1][ 0][3] - r2[1][ 0][1] + lo2
-          hi1 = r2[1][-1][4] - r2[1][-1][2] + hi2
+        if r2[:their]
+          lo1 = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
+          hi1 = r2[:their][-1][4] - r2[:their][-1][2] + hi2
         else
           lo1 = r3[4] - r3[6] + lo2
           hi1 = r3[4] - r3[6] + hi2
         end
         
         # detect type of changes
-        if !r2[0]
+        if !r2[:your]
           cmd = '1'
-        elsif not r2[1]
+        elsif not r2[:their]
           cmd = '0'
         elsif hi0 - lo0 != hi1 - lo1
           cmd = 'A'
         else
           cmd = '2'
-          for d in range(0, hi0 - lo0 + 1)
+          (0 ... hi0 - lo0).each do |d|
             (i0, i1) = [lo0 + d - 1, lo1 + d - 1]
             ok0 = (0 <= i0 && i0 < yourtext.length)
             ok1 = (0 <= i1 && i1 < theirtext.length)
@@ -208,6 +223,14 @@ module Dyph3
     end
 
     private
+      def self.invert_target(target)
+        if target == :your
+          :their
+        else
+          :your
+        end
+      end
+      
       def self._conflict_range(text3, r3, res)
         text_a = [] # their text
         (r3[3] ... r3[4]).each do |i|                   # inclusive(...)
@@ -238,21 +261,21 @@ module Dyph3
         
         ia = 1
         d.each do |r2|
-          (ia .. r2[1]).each do |lineno|
+          (ia .. r2[:their]).each do |lineno|
             res[:body] << text_a[lineno - 1]
           end
-          if r2[0] == 'c'
+          if r2[:your] == 'c'
             res[:conflict] += 1
             res[:body] << '<<<<<<<'
             (r2[3] ... r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
             end
             res[:body] << '======='
-            (r2[1] ... r2[2]).each do |lineno|
+            (r2[:their] ... r2[2]).each do |lineno|
               res[:body] << text_a[lineno - 1]
             end
             res[:body] << '>>>>>>>'
-          elsif r2[0] == 'a'
+          elsif r2[:your] == 'a'
             (r2[3] ... r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
             end
