@@ -4,15 +4,19 @@ module Dyph3
 
     DEFAULT_OPTIONS = {
       markers: {
+        left: "<<<<<<<",
+        base: "|||||||",
+        right: "=======",
+        close: ">>>>>>>"
       }
     }
     
-    def self.diff3_text(yourtext, original, theirtext)
-      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
+    def self.diff3_text(yourtext, original, theirtext, options={})
+      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
     end
     
-    def self.merge_text(yourtext, original, theirtext)
-      merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
+    def self.merge_text(yourtext, original, theirtext, options={})
+      merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
     end
     
     
@@ -130,7 +134,9 @@ module Dyph3
       d3
     end
     
-    def self.merge(yourtext, origtext, theirtext)
+    def self.merge(yourtext, origtext, theirtext, options={})
+      options = DEFAULT_OPTIONS.merge(options)
+      
       res = {conflict: 0, body: []}
       d3 = diff3(yourtext, origtext, theirtext)
       
@@ -150,7 +156,7 @@ module Dyph3
             res[:body] << text3[1][lineno - 1]
           end
         else
-          res = _conflict_range(text3, r3, res)
+          res = _conflict_range(text3, r3, res, options)
         end
         i2 = r3[6] + 1
       end
@@ -240,7 +246,7 @@ module Dyph3
         end
       end
       
-      def self._conflict_range(text3, r3, res)
+      def self._conflict_range(text3, r3, res, options)
         text_a = [] # their text
         (r3[3] .. r3[4]).each do |i|                   # inclusive(..)
           text_a << text3[1][i - 1]
@@ -252,19 +258,19 @@ module Dyph3
         d = diff(text_a, text_b)
         if !_assoc_range(d, 'c').nil? && r3[5] <= r3[6]
           res[:conflict] += 1
-          res[:body] << '<<<<<<<'
+          res[:body] << options[:markers][:left]
           (r3[1] .. r3[2]).each do |lineno|
             res[:body] << text3[0][lineno - 1]
           end
-          res[:body] << '|||||||'
+          res[:body] << options[:markers][:base]
           (r3[5] .. r3[6]).each do |lineno|
             res[:body] << text3[2][lineno - 1]
           end
-          res[:body] << '======='
+          res[:body] << options[:markers][:right]
           (r3[3] .. r3[4]).each do |lineno|
             res[:body] << text3[1][lineno - 1]
           end
-          res[:body] << '>>>>>>>'
+          res[:body] << options[:markers][:close]
           return res
         end
         
@@ -276,15 +282,15 @@ module Dyph3
           end
           if r2[0] == 'c'
             res[:conflict] += 1
-            res[:body] << '<<<<<<<'
+            res[:body] << options[:markers][:left]
             (r2[3] .. r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
             end
-            res[:body] << '======='
+            res[:body] << options[:markers][:right]
             (r2[1] .. r2[2]).each do |lineno|
               res[:body] << text_a[lineno - 1]
             end
-            res[:body] << '>>>>>>>'
+            res[:body] << options[:markers][:close]
           elsif r2[0] == 'a'
             (r2[3] .. r2[4]).each do |lineno|
               res[:body] << text_b[lineno - 1]
