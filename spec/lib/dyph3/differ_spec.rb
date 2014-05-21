@@ -45,6 +45,8 @@ TEXT
 This is the baseline.
 <<<<<<< start
 The start (changed by A).
+|||||||
+The start.
 =======
 The start.
 B added this line.
@@ -60,27 +62,27 @@ TEXT
 }
 
   it "should be tested" do
-    result = Dyph3::Differ.diff3(left, base, right)
+    result = Dyph3::Differ.merge_text(left, base, right, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
+    expect(result[:conflict]).to eq(1)
+    expect(result[:body].join("\n")).to eq expected_result
     
-    ap result
-    binding.pry
   end
 
   it "should not explode" do
-    result_hash = Dyph3::Differ.text_diff3(left, base, right, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
-    expect(result_hash[:conflicted]).to be_true
-    expect(result_hash[:result]).to eq expected_result
+    result = Dyph3::Differ.merge_text(left, base, right, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
+    expect(result[:conflict]).to eq(1)
+    expect(result[:body].join("\n")).to eq expected_result
   end
 
   it "should not be conflicted when not conflicted" do
-    result_hash = Dyph3::Differ.text_diff3(left, base, left, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
-    expect(result_hash[:result]).to eq left.strip #BUGBUG: differ losing a new line?
-    expect(result_hash[:conflicted]).to be_false
+    result = Dyph3::Differ.merge_text(left, base, left, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
+    expect(result[:body].join("\n")).to eq left.strip #BUGBUG: differ losing a new line?
+    expect(result[:conflict]).to eq(0)
   end
 
   it "should not be conflicted when not conflicted" do
-    result_hash = Dyph3::Differ.text_diff3(base, base, base, markers: {left: "<<<<<<< start", separator: "=======", right: ">>>>>>> changed_b"})
-    expect(result_hash[:result]).to eq base.strip #BUGBUG: differ losing a new line?
-    expect(result_hash[:conflicted]).to be_false
+    result = Dyph3::Differ.merge_text(base, base, base, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
+    expect(result[:body].join("\n")).to eq base.strip #BUGBUG: differ losing a new line?
+    expect(result[:conflict]).to eq(0)
   end
 end
