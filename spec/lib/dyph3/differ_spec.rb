@@ -100,4 +100,14 @@ TEXT
     expect(result[:conflict]).to eq(1)
     expect(result[:body]).to eq expected_result
   end
+  
+  it "should handle one side unchanged" do
+    left = "53fa7539-8d7d-4d88-af23-dd0ab2dfe81d"
+    base = "Article title"
+    right = "Article title"
+    
+    result = Dyph3::Differ.merge_text(left, base, right, include_base: false, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
+    expect(result[:conflict]).to eq(0)
+    expect(result[:body]).to eq left
+  end
 end
