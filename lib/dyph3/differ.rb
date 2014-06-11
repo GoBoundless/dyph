@@ -11,20 +11,20 @@ module Dyph3
       },
       include_base: true
     }
-    
+
     def self.diff3_text(yourtext, original, theirtext, options={})
       diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
     end
-    
+
     def self.merge_text(yourtext, original, theirtext, options={})
       result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
-      
+
       result[:body] = result[:body].join("\n")
-      
+
       result
     end
-    
-    
+
+
 
     # Three-way diff based on the GNU diff3.c by R. Smith.
     #   @param [in] yourtext    Array of lines of your text.
@@ -41,7 +41,6 @@ module Dyph3
       }
       d3 = []
       r3 = [nil,  0, 0,  0, 0,  0, 0]
-      
       while d2[:your].length > 0 || d2[:their].length > 0
         # find a continual range in origtext lo2...hi2
         # changed by yourtext or by theirtext.
@@ -49,16 +48,16 @@ module Dyph3
         #     d2[:your]            222    222222222
         #  origtext             ..L!!!!!!!!!!!!!!!!!!!!H..
         #     d2[:their]             222222   22  2222222
-        
+
         i_target = nil
         j_target = nil
         k_target = nil
-        
+
         r2 = {
           your: [],
           their: []
         }
-        
+
         if d2[:your].empty?
           i_target = :their
         else
@@ -72,25 +71,25 @@ module Dyph3
             end
           end
         end
-        
+
         j_target = i_target
         k_target = invert_target(i_target)
-        
+
         hi = d2[j_target][0][2]
-        r2[j_target] << d2[j_target].pop
+        r2[j_target] << d2[j_target].shift
         while d2[k_target].length > 0 && (d2[k_target][0][1] <= hi + 1)
           hi_k = d2[k_target][0][2]
-          r2[k_target] << d2[k_target].pop
+          r2[k_target] << d2[k_target].shift
           if hi < hi_k
             hi = hi_k
-            
+
             j_target = k_target
             k_target = invert_target(k_target)
           end
         end
         lo2 = r2[i_target][ 0][1]
         hi2 = r2[j_target][-1][2]
-        
+
         # take the corresponding ranges in yourtext lo0...hi0
         # and in theirtext lo1...hi1.
         #
@@ -113,7 +112,7 @@ module Dyph3
           lo1 = r3[4] - r3[6] + lo2
           hi1 = r3[4] - r3[6] + hi2
         end
-        
+
         # detect type of changes
         if r2[:your].empty?
           cmd = '1'
@@ -135,23 +134,23 @@ module Dyph3
         end
         d3 << [cmd,  lo0, hi0,  lo1, hi1,  lo2, hi2]
       end
-      
+
       d3
     end
-    
+
     def self.merge(yourtext, origtext, theirtext, options={})
       options = DEFAULT_OPTIONS.merge(options)
-      
+
       res = {conflict: 0, body: []}
       d3 = diff3(yourtext, origtext, theirtext)
-      
+
       text3 = [yourtext, theirtext, origtext]
       i2 = 1
       d3.each do |r3|
         (i2 ... r3[5]).each do |lineno|                  # exclusive (...)
           res[:body] << text3[2][lineno - 1]
         end
-        
+
         if r3[0] == '0'
           (r3[1] .. r3[2]).each do |lineno|            # inclusive (..)
             res[:body] << text3[0][lineno - 1]
@@ -165,14 +164,14 @@ module Dyph3
         end
         i2 = r3[6] + 1
       end
-      
+
       (i2 .. text3[2].length).each do |lineno|         # inclusive (..)
         res[:body] << text3[2][lineno - 1]
       end
-      
+
       res
     end
-    
+
     # Two-way diff based on the algorithm by P. Heckel.
     # @param [in] text_a Array of lines of first text.
     # @param [in] text_b Array of lines of second text.
@@ -180,7 +179,7 @@ module Dyph3
     def self.diff(text_a, text_b)
       d    = []
       uniq = [[text_a.length, text_b.length]]
-      
+
       freq, ap, bp = [{}, {}, {}]
       text_a.each_with_index do |s, i|
         freq[s] ||= 0
@@ -197,7 +196,7 @@ module Dyph3
           uniq << [ap[s], bp[s]]
         end
       end
-      
+
       freq, ap, bp = [{}, {}, {}]
       uniq.sort!{|a, b| a[0] <=> b[0]}
       a1, b1 = [0, 0]
@@ -208,7 +207,7 @@ module Dyph3
         a1 += 1
         b1 += 1
       end
-      
+
       uniq.each do |a_uniq, b_uniq|
         if a_uniq < a1 || b_uniq < b1
           next
@@ -238,7 +237,7 @@ module Dyph3
           b1 += 1
         end
       end
-      
+
       d
     end
 
@@ -250,7 +249,7 @@ module Dyph3
           :your
         end
       end
-      
+
       def self._conflict_range(text3, r3, res, options)
         text_a = [] # their text
         (r3[3] .. r3[4]).each do |i|                   # inclusive(..)
@@ -280,9 +279,9 @@ module Dyph3
           res[:body] << options[:markers][:close]
           return res
         end
-        
+
         ia = 1
-        
+
         d.each do |r2|
           (ia ... r2[1]).each do |lineno|
             res[:body] << text_a[lineno - 1]
@@ -305,21 +304,21 @@ module Dyph3
           end
           ia = r2[2] + 1
         end
-        
+
         (ia ... text_a.length).each do |lineno|
           res[:body] << text_a[lineno - 1]
         end
-        
+
         res
       end
-      
+
       def self._assoc_range(diff, diff_type)
         diff.each do |d|
           if d[0] == diff_type
             return d
           end
         end
-        
+
         nil
       end
   end
