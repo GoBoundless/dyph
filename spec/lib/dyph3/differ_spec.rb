@@ -117,7 +117,7 @@ describe Dyph3::Differ do
     right = """\n<h2>\n This is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n</p>\n"""
     left = """\n<h2>\nThis is cool.\n</h2>\n<p>\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n</p>\n"""
     base = """\n<h2>\n This is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n</p>\n"""
-    expected_result = "\n<h2>This is cool.\n</h2>\n<p>\n<<<<<<<\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n|||||||\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n=======\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n>>>>>>>\n</p>\n"
+    expected_result = "\n<h2>\nThis is cool.\n</h2>\n<p>\n<<<<<<< start\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n|||||||\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n=======\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n>>>>>>> changed_b\n</p>"
 
     it "should produce a conflict" do
       result = Dyph3::Differ.merge_text(left, base, right, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
