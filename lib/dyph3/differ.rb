@@ -19,7 +19,7 @@ module Dyph3
     def self.merge_text(yourtext, original, theirtext, options={})
       result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
 
-      #result[:body] = result[:body].join("\n")
+      result = merge_non_conflicts(result, 0)
 
       result
     end
@@ -159,32 +159,23 @@ module Dyph3
       d3.each do |r3|
         #r3[5] is the line that this new conflict starts
         #put original text from lines i2 ... r3[5] into the resulting body.
+        #initial_text = accumulate_lines(i2, r3[5] + 1, text3[2])
         initial_text = []
         (i2 ... r3[5]).each do |lineno|                  # exclusive (...)
-          res[:body] << text3[2][lineno - 1]
           initial_text << text3[2][lineno - 1]
         end
-        trial_res << {type: :non_conflict, text: initial_text.join("\n"), place: :a}
+        trial_res << {type: :non_conflict, text: initial_text.join("\n")+"\n"}
 
 
         if r3[0] == '0'
           # 0 flag means choose yourtext.  put lines r3[1] .. r3[2] into the resulting body.
-          temp_text = []
-          (r3[1] .. r3[2]).each do |lineno|            # inclusive (..)
-            res[:body] << text3[0][lineno - 1]
-            temp_text << text3[0][lineno - 1]
-          end
-          trial_res << {type: :non_conflict, text: temp_text.join("\n"), place: :b}
+          temp_text = accumulate_lines(r3[1], r3[2], text3[0])
+          trial_res << {type: :non_conflict, text: temp_text}#, place: :b}
         elsif r3[0] != 'A'
           # A flag means choose theirtext.  put lines r3[3] to r3[4] into the resulting body.
-          temp_text = []
-          (r3[3] .. r3[4]).each do |lineno|            # inclusive (..)
-            res[:body] << text3[1][lineno - 1]
-            temp_text << text3[1][lineno - 1]
-          end
-          trial_res << {type: :non_conflict, text: temp_text.join("\n"), place: :c}
+          temp_text = accumulate_lines(r3[3], r3[4], text3[1])
+          trial_res << {type: :non_conflict, text: temp_text}#, place: :c}
         else
-          res = _conflict_range(text3, r3, res, options, trial_res)
           trial_res = _conflict_range(text3, r3, res, options, trial_res)
         end
         #assign i2 to be the line in origtext after the conflict
@@ -192,12 +183,8 @@ module Dyph3
       end
 
       #finish by putting all text after the last conflict into the resulting body.
-      temp_text = []
-      (i2 .. text3[2].length).each do |lineno|         # inclusive (..)
-        #res[:body] << text3[2][lineno - 1]
-        temp_text << text3[2][lineno - 1]
-      end
-      trial_res << {type: :non_conflict, text: temp_text.join("\n"), place: :d}
+      ending_text = accumulate_lines(i2, text3[2].length, text3[2])[0..-2] #remove trailing new line
+      trial_res << {type: :non_conflict, text: ending_text}#, place: :d}
 
       trial_res
     end
@@ -242,16 +229,9 @@ module Dyph3
         b1 += 1
       end
 
-      # uniq.each do |a_uniq, b_uniq|
-      #   puts text_a[a_uniq]
-      # end
-
       # start with a1, b1 being the lines before the first conflict.
       # for each pair of lines in uniq which definitely match eachother:
       uniq.each do |a_uniq, b_uniq|
-        # puts " "
-        # puts "UNIQ.EACH"
-        # puts text_a[a_uniq]
         # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a conflict (since we walked a1 and b1 to conflicts before this section, and at the end of each block)
         # a1 and b1 are always the lines right before the next conflict.
         if a_uniq < a1 || b_uniq < b1
@@ -271,22 +251,10 @@ module Dyph3
         end
 
         if a0 <= a1 && b0 <= b1 # for this conflict, the bounds are both 'normal'.  the beginning of the conflict is before the end.
-          # puts "CCCCC: " + text_a[a1] + " " + text_b[b1]
-          # puts text_a[a0+1..a1+1]
-          # puts "///////////"
-          # puts text_b[b0+1..b1+1]
           d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
         elsif a0 <= a1
-          # puts "DDDDDD: " + text_a[a1] + " " + text_b[b1]
-          # puts text_a[a0+1..a1+1]
-          # puts "///////////"
-          # puts text_b[b0+1..b0]
           d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
         elsif b0 <= b1
-          # puts "AAAAAA: " + text_a[a1] + " " + text_b[b1]
-          # puts text_a[a0+1..a0]
-          # puts "///////////"
-          # puts text_b[b0+1..b1+1]
           d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
         end
         #set a1 and b1 to be the words after the matching uniq word
@@ -300,10 +268,6 @@ module Dyph3
           a1 += 1
           b1 += 1
         end
-        # puts "next a1"
-        # puts text_a[a1]
-        # puts "next b1"
-        # puts text_b[b1]
       end
 
       d
@@ -330,33 +294,13 @@ module Dyph3
         end
         d = diff(text_a, text_b)
         if !_assoc_range(d, 'c').nil? && r3[5] <= r3[6]
-          conflict = {type: :conflict, place: :z}
-          #res[:conflict] += 1
-          #res[:body] << options[:markers][:left]
-          ours = []
-          (r3[1] .. r3[2]).each do |lineno|
-            #res[:body] << text3[0][lineno - 1]
-            ours << text3[0][lineno -1]
-          end
-          conflict[:ours] = ours.join("\n")
+          conflict = {type: :conflict}#, place: :z}
+          conflict[:ours] = accumulate_lines(r3[1], r3[2], text3[0])
           if options[:include_base]
-            base = []
-            #res[:body] << options[:markers][:base]
-            (r3[5] .. r3[6]).each do |lineno|
-              #res[:body] << text3[2][lineno - 1]
-              base << text3[2][lineno - 1]
-            end
-            conflict[:base] = base.join("\n")
+            conflict[:base] = accumulate_lines(r3[5], r3[6], text3[2])
           end
-          #res[:body] << options[:markers][:right]
-          theirs = []
-          (r3[3] .. r3[4]).each do |lineno|
-            #res[:body] << text3[1][lineno - 1]
-            theirs << text3[1][lineno - 1]
-          end
-          conflict[:theirs] = theirs.join("\n")
+          conflict[:theirs] = accumulate_lines(r3[3], r3[4], text3[1])
           trial_res << conflict
-          #res[:body] << options[:markers][:close]
           return trial_res
         end
 
@@ -365,52 +309,35 @@ module Dyph3
         d.each do |r2|
           conflict = {}
           common = []
+          #TODO: figure out if this is needed
           (ia ... r2[1]).each do |lineno|
             #res[:body] << text_a[lineno - 1]
             common << text_a[lineno - 1]
           end
           #do something with common?
           if r2[0] == 'c'
-            #res[:conflict] += 1
             conflict[:type] =  :conflict
-            conflict[:place] = :y
-            #res[:body] << options[:markers][:left]
-            ours = []
-            (r2[3] .. r2[4]).each do |lineno|
-              #res[:body] << text_b[lineno - 1]
-              ours << text_b[lineno - 1]
-            end
-            conflict[:ours] = ours.join("\n")
-            #res[:body] << options[:markers][:right]
-            theirs = []
-            (r2[1] .. r2[2]).each do |lineno|
-              theirs << text_a[lineno - 1]
-              #res[:body] << text_a[lineno - 1]
-            end
-            conflict[:theirs] = theirs.join("\n")
-            #res[:body] << options[:markers][:close]
+            #conflict[:place] = :y
+            conflict[:ours] = accumulate_lines(r2[3], r2[4], text_b)
+            conflict[:theirs] = accumulate_lines(r2[1], r2[2], text_a)
           elsif r2[0] == 'a'
             conflict[:type] = :conflict
-            conflict[:place] = :x
-            temp_text = []
-            (r2[3] .. r2[4]).each do |lineno|
-              #res[:body] << text_b[lineno - 1]
-              temp_text << text_b[lineno - 1]
-            end
-            conflict[:text] = temp_text.join("\n")
+            #conflict[:place] = :x
+            conflict[:text] = accumulate_lines(r2[3], r2[4], text_b)
           end
 
           ia = r2[2] + 1
           trial_res << conflict
         end
 
-        temp_text = []
-        (ia ... text_a.length).each do |lineno|
+        final_text = accumulate_lines(ia, text_a.length + 1, text_a)
+        trial_res << {type: :non_conflict, text: final_text}
+        #temp_text = []
+        #(ia ... text_a.length).each do |lineno|
           #res[:body] << text_a[lineno - 1]
-          temp_text << text_a[lineno - 1]
-        end
-        trial_res << {type: :non_conflict, text: temp_text.join("\n"), place: :e}
-
+          #temp_text << text_a[lineno - 1]
+        #end
+        #trial_res << {type: :non_conflict, text: temp_text.join("\n"), place: :e}
         trial_res
       end
 
@@ -429,15 +356,25 @@ module Dyph3
 
       # @param [in] conflicts
       # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
-      def self.merge_contiguous_non_conflicts(res)
-        indices_to_delete = []
-        (0 ... res.length).each do |i|
-          if res[i][:type] == :non_conflict && res[i+1][:type] == :non_conflict
-            res[i][:text] += res[i+1][:text]
-            indices_to_delete << i+1
-          end
+      def self.merge_non_conflicts(res, i)
+        if i == res.length - 1
+          return res
+        elsif res[i][:type] == :non_conflict && res[i+1][:type] == :non_conflict
+          res[i][:text] += "\n" unless res[i][:text][-1] == "\n"
+          res[i][:text] += res[i+1][:text]
+          res.delete_at(i+1)
+          merge_non_conflicts(res, i)
+        else
+          merge_non_conflicts(res, i+1)
         end
-        indices_to_delete.each{ |i| res.delete_at(i)}
+      end
+
+      def self.accumulate_lines(lo, hi, text)
+        lines = []
+        (lo .. hi).each do |lineno|
+          lines << text[lineno - 1]
+        end
+        lines.join("\n") + "\n"
       end
   end
 end
