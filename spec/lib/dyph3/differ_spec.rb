@@ -10,35 +10,15 @@ describe Dyph3::Differ do
 
     let(:right) {"This is the baseline.\nThe start.\nB added this line.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
 
-    let(:expected_result) {
-      <<-TEXT.rstrip
-  This is the baseline.
-<<<<<<< start
-  The start (changed by A).
-|||||||
-  The start.
-=======
-  The start.
-  B added this line.
->>>>>>> changed_b
-  The end.
-  cats
-  dogs
-  pigs
-  cows
-  chickens
-  TEXT
-  }
-
-  let(:new_expected_result){[
-    {type: :non_conflict, text: "This is the baseline.\n"},
-    {type: :conflict, ours: "The start (changed by A).\n", base: "The start.\n", theirs: "The start.\nB added this line.\n"},
-    {type: :non_conflict, text: "The end.\ncats\ndogs\npigs\ncows\nchickens"}
+    let(:expected_result){[
+      {type: :non_conflict, text: "This is the baseline.\n"},
+      {type: :conflict, ours: "The start (changed by A).\n", base: "The start.\n", theirs: "The start.\nB added this line.\n"},
+      {type: :non_conflict, text: "The end.\ncats\ndogs\npigs\ncows\nchickens"}
     ]}
 
     it "should not explode" do
       res = Dyph3::Differ.merge_text(left, base, right)
-      expect(res).to eq new_expected_result
+      expect(res).to eq expected_result
     end
 
     it "should not be conflicted when not conflicted" do
@@ -54,31 +34,19 @@ describe Dyph3::Differ do
       expect(result.length).to eq(1)
     end
 
-#     it "should allow you to not include the base in the result" do
-#       expected_result = <<-TEXT.rstrip
-#   This is the baseline.
-# <<<<<<< start
-#   The start (changed by A).
-# =======
-#   The start.
-#   B added this line.
-# >>>>>>> changed_b
-#   The end.
-#   cats
-#   dogs
-#   pigs
-#   cows
-#   chickens
-#   TEXT
-
-#       result = Dyph3::Differ.merge_text(left, base, right, include_base: false, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
-#       expect(result[:conflict]).to eq(1)
-#       expect(result[:body]).to eq expected_result
-#     end
-
     # issue adding \n to the beginning and end of a line
     it "should handle one side unchanged" do
-      left = "53fa7539-8d7d-4d88-af23-dd0ab2dfe81d"
+      left = "19275-129 ajkslkf"
+      base = "Article title"
+      right = "Article title"
+
+      result = Dyph3::Differ.merge_text(left, base, right)
+      expect(result.length).to eq(1)
+      expect(result[0][:text]).to eq left
+    end
+
+    it "should handle one side unchanged" do
+      left = "This is a big change\nArticle title"
       base = "Article title"
       right = "Article title"
 
@@ -89,15 +57,126 @@ describe Dyph3::Differ do
   end
 
   describe 'should have conflict' do
-    right = """\n<h2>\n This is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n</p>\n"""
-    left = """\n<h2>\nThis is cool.\n</h2>\n<p>\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n</p>\n"""
-    base = """\n<h2>\n This is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n</p>\n"""
-    expected_result = "\n<h2>\nThis is cool.\n</h2>\n<p>\n<<<<<<< start\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n|||||||\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n=======\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n>>>>>>> changed_b\n</p>"
+    left = """\n<h2>\nThis is cool.\n</h2>\n<p>\nHi I'm a paragraph.\nI'm another sentence in the paragraph.\n</p>"""
+    right = """\n<h2>\nThis is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n</p>"""
+    base = """\n<h2>\nThis is cool.\n</h2>\n<p>\n Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n</p>"""
+    expected_result = [
+      {type: :non_conflict, text: "\n<h2>\nThis is cool.\n</h2>\n<p>\n"},
+      {type: :conflict, ours: "Hi I'm a paragraph.\nI'm another sentence in the paragraph.\n", 
+                        theirs: " Hi I'm a paragraph.\nI'm a second sentence in the paragraph.\n",
+                        base: " Hi I'm a paragraph.\nI'm a sentence in the paragraph.\n"},
+      {type: :non_conflict, text: "</p>"}                  
+    ]
 
     it "should produce a conflict" do
-      result = Dyph3::Differ.merge_text(left, base, right, markers: {left: "<<<<<<< start", base: "|||||||", right: "=======", close: ">>>>>>> changed_b"})
-      expect(result[:conflict]).to be_true
-      expect(result[:body]).to eq expected_result
+      result = Dyph3::Differ.merge_text(left, base, right)
+      expect(result.length).to be > 0
+      expect(result[0]).to eq expected_result[0]
+      expect(result[1]).to eq expected_result[1]
+      expect(result[2]).to eq expected_result[2]
+    end
+  end
+
+  describe 'testing multiple types of conflicts' do
+    ours = ""
+    theirs = ""
+    base = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+    it 'should have a conflict in the first line' do
+      ours = "THIS IS some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+      theirs = "THIS IS SOME TEXT\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+      expected_result = [
+        {type: :conflict, ours: "THIS IS some text\n", base: "this is some text\n", theirs: "THIS IS SOME TEXT\n"},
+        {type: :non_conflict, text: "another line of text\none more good line\nthats about it now\nthis is the last line\n"}]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+    end
+    it 'should have a conflict in the last line' do
+      ours = "this is some text\nanother line of text\none more good line\nthats about it NOW\nTHIS is the last line\n"
+      theirs="this is some text\nanother line of text\none more good line\nthats about it no\nTHIS is the LAST LINE\n"
+      expected_result = [
+        {type: :non_conflict, text: "this is some text\nanother line of text\none more good line\n"},
+        {type: :conflict, ours: "thats about it NOW\nTHIS is the last line\n", base: "thats about it now\nthis is the last line\n", theirs: "thats about it no\nTHIS is the LAST LINE\n"}]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+    end
+    it 'should have a single conflict in between non_conflicts' do
+      ours = "this is some text\nanother line of text\none more BAD line\nwe inserted a line\nthats about it now\nthis is the last line\n"
+      theirs = "this is some text\nanother line of text\none more GREAT line\nthey inserted a line\nthats about it now\nthis is the last line\n"
+      expected_result = [
+        {type: :non_conflict, text: "this is some text\nanother line of text\n"},
+        {type: :conflict, ours: "one more BAD line\nwe inserted a line\n", base: "one more good line\n", theirs: "one more GREAT line\nthey inserted a line\n"},
+        {type: :non_conflict, text: "thats about it now\nthis is the last line\n"}]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+    end
+    it 'should handle overlapping conflicts' do
+      ours = "this is some text\nanother LINE of text\none more GREAT line\nthats about it now\nthis is the last line\n"
+      theirs = "this is some text\nanother line of text\none more GOOD line\nthats ABOUT it now\nthis is the last line\n"
+      expected_result = [
+        {type: :non_conflict, text: "this is some text\n"},
+        {type: :conflict, ours: "another LINE of text\none more GREAT line\nthats about it now\n", 
+                          base: "another line of text\none more good line\nthats about it now\n", 
+                          theirs: "another line of text\none more GOOD line\nthats ABOUT it now\n"},
+        {type: :non_conflict, text: "this is the last line\n"}]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+      expected_result_reversed = [
+        {type: :non_conflict, text: "this is some text\n"},
+        {type: :conflict, theirs: "another LINE of text\none more GREAT line\nthats about it now\n", 
+                          base: "another line of text\none more good line\nthats about it now\n", 
+                          ours: "another line of text\none more GOOD line\nthats ABOUT it now\n"},
+        {type: :non_conflict, text: "this is the last line\n"}]
+      result_reversed = Dyph3::Differ.merge_text(theirs, base, ours)
+      expect(result_reversed).to eq(expected_result_reversed)
+    end
+    it 'should handle non overlapping changes without conflicts' do
+      ours = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about it now\nthis is the last line\n"
+      theirs = "this is some text\nanother line of text\none more good line\nthats ABOUT it now\nthis is the last line\n"
+      expected_result = [
+        {type: :non_conflict, text: "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"}]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+    end
+  end
+
+  describe 'testing trailing newlines' do
+    trailing = "hi\nthis is text\n"
+    non_trailing = "hi\nthis is text"
+    it 'should not have a trailing newline where expected' do
+      result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, non_trailing)
+      expect(result1.length).to eq(1)
+      expect(result1[0][:text][-1]).to_not eq("\n")
+      
+      result2 = Dyph3::Differ.merge_text(non_trailing, trailing, non_trailing)
+      expect(result2.length).to eq(1)
+      expect(result2[0][:text][-1]).to_not eq("\n")
+      
+      result3 = Dyph3::Differ.merge_text(non_trailing, trailing, trailing)
+      expect(result3.length).to eq(1)
+      expect(result3[0][:text][-1]).to_not eq("\n")
+      
+      result4 = Dyph3::Differ.merge_text(trailing, trailing, non_trailing)
+      expect(result4.length).to eq(1)
+      expect(result4[0][:text][-1]).to_not eq("\n")
+    end
+
+    it 'should have a trailing newline where expected' do
+      result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, trailing)
+      expect(result1.length).to eq(1)
+      expect(result1[0][:text][-1]).to eq("\n")
+
+      result2 = Dyph3::Differ.merge_text(trailing, non_trailing, non_trailing)
+      expect(result2.length).to eq(1)
+      expect(result2[0][:text][-1]).to eq("\n")
+
+      result3 = Dyph3::Differ.merge_text(trailing, non_trailing, trailing)
+      expect(result3.length).to eq(1)
+      expect(result3[0][:text][-1]).to eq("\n")
+
+      result4 = Dyph3::Differ.merge_text(trailing, trailing, trailing)
+      expect(result4.length).to eq(1)
+      expect(result4[0][:text][-1]).to eq("\n")
+      
     end
   end
 end
