@@ -2,22 +2,12 @@ module Dyph3
   class Differ
     # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
-    DEFAULT_OPTIONS = {
-      markers: {
-        left: "<<<<<<<",
-        base: "|||||||",
-        right: "=======",
-        close: ">>>>>>>"
-      },
-      include_base: true
-    }
-
-    def self.diff3_text(yourtext, original, theirtext, options={})
-      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
+    def self.diff3_text(yourtext, original, theirtext)
+      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
     end
 
-    def self.merge_text(yourtext, original, theirtext, options={})
-      result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"), options)
+    def self.merge_text(yourtext, original, theirtext)
+      result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
       
       result = handle_trailing_newline(yourtext, original, theirtext, result)
       result = merge_non_conflicts(result)
@@ -40,7 +30,7 @@ module Dyph3
         their: diff(origtext, theirtext) # queue of conflicts with their
       }
       result_diff3 = []
-      r3 = [nil,  0, 0,  0, 0,  0, 0]
+      chunk_desc = [nil,  0, 0,  0, 0,  0, 0]
       # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB) 
       while d2[:your].length > 0 || d2[:their].length > 0
         # find a continual range in origtext lo2...hi2
@@ -50,35 +40,12 @@ module Dyph3
         #  origtext             ..L!!!!!!!!!!!!!!!!!!!!H..
         #     d2[:their]             222222   22  2222222
 
-        i_target = nil
-        j_target = nil
-        k_target = nil
-
         r2 = {
           your: [],
           their: []
         }
 
-        #run out of conflicts in :your queue
-        if d2[:your].empty?
-          i_target = :their
-        else
-          #run out of conflicts in :their queue
-          if d2[:their].empty?
-            i_target = :your
-          else
-            #there are conflicts in both queues. let the target be the earlier one.
-            if d2[:your][0][1] <= d2[:their][0][1]
-              i_target = :your
-            else
-              i_target = :their
-            end
-          end
-        end
-
-        j_target = i_target
-        k_target = invert_target(i_target) # k_target is opposite of i and j
-
+        i_target, j_target, k_target = set_targets(d2)
         
         # simultaneously consider all conflicts that overlap within a region. So, attempt to resolve
         # a single conflict from 'your' or 'their', but then must also consider all overlapping conflicts from the other set.
@@ -97,88 +64,38 @@ module Dyph3
         lo2 = r2[i_target][ 0][1]
         hi2 = r2[j_target][-1][2]
 
-        # take the corresponding ranges in yourtext lo0...hi0
-        # and in theirtext lo1...hi1.
-        #
-        #   yourtext     ...L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H..
-        #   d2[:your]       222    222222222
-        #   origtext     ..00!1111!000!!00!111111..
-        #   d2[:their]        222222   22  2222222
-        #  theirtext          ..L!!!!!!!!!!!!!!!!H..
-        if !r2[:your].empty?
-          lo0 = r2[:your][ 0][3] - r2[:your][ 0][1] + lo2
-          hi0 = r2[:your][-1][4] - r2[:your][-1][2] + hi2
-        else
-          lo0 = r3[2] - r3[6] + lo2
-          hi0 = r3[2] - r3[6] + hi2
-        end
-        if !r2[:their].empty?
-          lo1 = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
-          hi1 = r2[:their][-1][4] - r2[:their][-1][2] + hi2
-        else
-          lo1 = r3[4] - r3[6] + lo2
-          hi1 = r3[4] - r3[6] + hi2
-        end
+        your_lo, your_hi, their_lo, their_hi = determine_ranges(r2, chunk_desc, lo2, hi2)
 
-        # detect type of changes
-        if r2[:your].empty?
-          cmd = '1'
-        elsif r2[:their].empty?
-          cmd = '0'
-        elsif hi0 - lo0 != hi1 - lo1
-          cmd = 'A'
-        else
-          cmd = '2'
-          (0 .. hi0 - lo0).each do |d|
-            (i0, i1) = [lo0 + d - 1, lo1 + d - 1]
-            ok0 = (0 <= i0 && i0 < yourtext.length)
-            ok1 = (0 <= i1 && i1 < theirtext.length)
-            if (ok0 ^ ok1) || (ok0 && yourtext[i0] != theirtext[i1])
-              cmd = 'A'
-              break
-            end
-          end
-        end
-        result_diff3 << [cmd,  lo0, hi0,  lo1, hi1,  lo2, hi2]
+        conflict_type = determine_conflict_type(r2, yourtext, theirtext, your_lo, your_hi, their_lo, their_hi)
+
+        result_diff3 << [conflict_type,  your_lo, your_hi,  their_lo, their_hi,  lo2, hi2]
       end
 
       result_diff3
     end
 
-    def self.merge(yourtext, origtext, theirtext, options={})
-      options = DEFAULT_OPTIONS.merge(options)
-
+    def self.merge(yourtext, origtext, theirtext)
       res = []
 
       d3 = diff3(yourtext, origtext, theirtext)
 
       text3 = [yourtext, theirtext, origtext]
       i2 = 1
-      d3.each do |r3|
-        #r3[5] is the line that this new conflict starts
-        #put original text from lines i2 ... r3[5] into the resulting body.
-        #initial_text = accumulate_lines(i2, r3[5] + 1, text3[2])
+      d3.each do |chunk_desc|
+        #chunk_desc[5] is the line that this new conflict starts
+        #put original text from lines i2 ... chunk_desc[5] into the resulting body.
+        #initial_text = accumulate_lines(i2, chunk_desc[5] + 1, text3[2])
         initial_text = []
-        (i2 ... r3[5]).each do |lineno|                  # exclusive (...)
+        (i2 ... chunk_desc[5]).each do |lineno|                  # exclusive (...)
           initial_text << text3[2][lineno - 1]
         end
         initial_text = initial_text.join("\n") + "\n"
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
 
-
-        if r3[0] == '0'
-          # 0 flag means choose yourtext.  put lines r3[1] .. r3[2] into the resulting body.
-          temp_text = accumulate_lines(r3[1], r3[2], text3[0])
-          res << {type: :non_conflict, text: temp_text}
-        elsif r3[0] != 'A'
-          # A flag means choose theirtext.  put lines r3[3] to r3[4] into the resulting body.
-          temp_text = accumulate_lines(r3[3], r3[4], text3[1])
-          res << {type: :non_conflict, text: temp_text}
-        else
-          res = _conflict_range(text3, r3, res, options)
-        end
+        res = interpret_chunk(res, chunk_desc, text3)
+        
         #assign i2 to be the line in origtext after the conflict
-        i2 = r3[6] + 1
+        i2 = chunk_desc[6] + 1
       end
 
       #finish by putting all text after the last conflict into the resulting body.
@@ -248,13 +165,8 @@ module Dyph3
           b1 -= 1
         end
 
-        if a0 <= a1 && b0 <= b1 # for this conflict, the bounds are both 'normal'.  the beginning of the conflict is before the end.
-          d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
-        elsif a0 <= a1
-          d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
-        elsif b0 <= b1
-          d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
-        end
+        d = add_conflict(d, a0, a1, b0, b1)
+        
         #set a1 and b1 to be the words after the matching uniq word
         a1, b1 = [a_uniq + 1, b_uniq + 1]
 
@@ -280,24 +192,22 @@ module Dyph3
         end
       end
 
-      #only called with certain conflict types:
-      def self._conflict_range(text3, r3, res, options)
+      # called only in cases where there may be a conflict
+      def self._conflict_range(text3, chunk_desc, res)
         text_a = [] # conflicting lines in theirtext
-        (r3[3] .. r3[4]).each do |i|                   # inclusive(..)
+        (chunk_desc[3] .. chunk_desc[4]).each do |i|                   # inclusive(..)
           text_a << text3[1][i - 1]
         end
         text_b = [] # conflicting lines in yourtext
-        (r3[1] .. r3[2]).each do |i|                   # inclusive(..)
+        (chunk_desc[1] .. chunk_desc[2]).each do |i|                   # inclusive(..)
           text_b << text3[0][i - 1]
         end
         d = diff(text_a, text_b)
-        if !_assoc_range(d, 'c').nil? && r3[5] <= r3[6]
+        if !_assoc_range(d, 'c').nil? && chunk_desc[5] <= chunk_desc[6]
           conflict = {type: :conflict}
-          conflict[:ours] = accumulate_lines(r3[1], r3[2], text3[0])
-          if options[:include_base]
-            conflict[:base] = accumulate_lines(r3[5], r3[6], text3[2])
-          end
-          conflict[:theirs] = accumulate_lines(r3[3], r3[4], text3[1])
+          conflict[:ours] = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
+          conflict[:base] = accumulate_lines(chunk_desc[5], chunk_desc[6], text3[2])
+          conflict[:theirs] = accumulate_lines(chunk_desc[3], chunk_desc[4], text3[1])
           res << conflict
           return res
         end
@@ -329,6 +239,22 @@ module Dyph3
         res
       end
 
+
+      def self.interpret_chunk(res, chunk_desc, text3)
+        if chunk_desc[0] == '0'
+          # 0 flag means choose yourtext.  put lines chunk_desc[1] .. chunk_desc[2] into the resulting body.
+          temp_text = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
+          res << {type: :non_conflict, text: temp_text}
+        elsif chunk_desc[0] != 'A'
+          # A flag means choose theirtext.  put lines chunk_desc[3] to chunk_desc[4] into the resulting body.
+          temp_text = accumulate_lines(chunk_desc[3], chunk_desc[4], text3[1])
+          res << {type: :non_conflict, text: temp_text}
+        else
+          res = _conflict_range(text3, chunk_desc, res)
+        end
+        res
+      end
+
       # @param [in] diff        conflicts in diff structure
       # @param [in] diff_type   type of diff looked for in diff
       # @returns diff_type if any conflicts in diff are of type diff_type.  otherwise returns nil
@@ -340,6 +266,92 @@ module Dyph3
         end
 
         nil
+      end
+
+      # take the corresponding ranges in yourtext lo0...hi0
+      # and in theirtext lo1...hi1.
+      #
+      #   yourtext     ...L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H..
+      #   d2[:your]       222    222222222
+      #   origtext     ..00!1111!000!!00!111111..
+      #   d2[:their]        222222   22  2222222
+      #  theirtext          ..L!!!!!!!!!!!!!!!!H..
+      def self.determine_ranges(r2, chunk_desc, lo2, hi2)
+        if !r2[:your].empty?
+          your_lo = r2[:your][ 0][3] - r2[:your][ 0][1] + lo2
+          your_hi = r2[:your][-1][4] - r2[:your][-1][2] + hi2
+        else
+          your_lo = chunk_desc[2] - chunk_desc[6] + lo2
+          your_hi0 = chunk_desc[2] - chunk_desc[6] + hi2
+        end
+        if !r2[:their].empty?
+          their_lo = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
+          their_hi = r2[:their][-1][4] - r2[:their][-1][2] + hi2
+        else
+          their_lo = chunk_desc[4] - chunk_desc[6] + lo2
+          their_hi = chunk_desc[4] - chunk_desc[6] + hi2
+        end
+        [your_lo, your_hi, their_lo, their_hi]
+      end
+
+
+      def self.determine_conflict_type(r2, yourtext, theirtext, your_lo, your_hi, their_lo, their_hi)
+        # detect type of changes
+        if r2[:your].empty?
+          cmd = '1'
+        elsif r2[:their].empty?
+          cmd = '0'
+        elsif your_hi - your_lo != their_hi - their_lo
+          cmd = 'A'
+        else
+          cmd = '2'
+          (0 .. your_hi - your_lo).each do |d|
+            (i0, i1) = [your_lo + d - 1, their_lo + d - 1]
+            ok0 = (0 <= i0 && i0 < yourtext.length)
+            ok1 = (0 <= i1 && i1 < theirtext.length)
+            if (ok0 ^ ok1) || (ok0 && yourtext[i0] != theirtext[i1])
+              cmd = 'A'
+              break
+            end
+          end
+        end
+        cmd
+      end
+
+      # given the calculated bounds of the 2 way diff, create the proper conflict type and add it to the queue.
+      def self.add_conflict(d, a0, a1, b0, b1)
+        if a0 <= a1 && b0 <= b1 # for this conflict, the bounds are both 'normal'.  the beginning of the conflict is before the end.
+          d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
+        elsif a0 <= a1
+          d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
+        elsif b0 <= b1
+          d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
+        end
+        d
+      end
+
+      def self.set_targets(d2)
+        #run out of conflicts in :your queue
+        if d2[:your].empty?
+          i_target = :their
+        else
+          #run out of conflicts in :their queue
+          if d2[:their].empty?
+            i_target = :your
+          else
+            #there are conflicts in both queues. let the target be the earlier one.
+            if d2[:your][0][1] <= d2[:their][0][1]
+              i_target = :your
+            else
+              i_target = :their
+            end
+          end
+        end
+
+        j_target = i_target
+        k_target = invert_target(i_target) # k_target is opposite of i and j
+
+        [i_target, j_target, k_target]
       end
 
       # @param [in] conflicts
