@@ -23,15 +23,13 @@ describe Dyph3::Differ do
 
     it "should not be conflicted when not conflicted" do
       result = Dyph3::Differ.merge_text(left, base, left)
-      expecting = [{type: :non_conflict, text: left}]
-      expect(result).to eq expecting #BUGBUG: differ losing a new line?
-      expect(result.length).to eq(1)
+      expecting = left
+      expect(result).to eq expecting
     end
 
     it "should not be conflicted when not conflicted" do
       result = Dyph3::Differ.merge_text(base, base, base)
-      expect(result[0][:text]).to eq base
-      expect(result.length).to eq(1)
+      expect(result).to eq base
     end
 
     # issue adding \n to the beginning and end of a line
@@ -41,8 +39,7 @@ describe Dyph3::Differ do
       right = "Article title"
 
       result = Dyph3::Differ.merge_text(left, base, right)
-      expect(result.length).to eq(1)
-      expect(result[0][:text]).to eq left
+      expect(result).to eq(left)
     end
 
     it "should handle one side unchanged" do
@@ -51,8 +48,7 @@ describe Dyph3::Differ do
       right = "Article title"
 
       result = Dyph3::Differ.merge_text(left, base, right)
-      expect(result.length).to eq(1)
-      expect(result[0][:text]).to eq left
+      expect(result).to eq(left)
     end
   end
 
@@ -132,8 +128,7 @@ describe Dyph3::Differ do
     it 'should handle non overlapping changes without conflicts' do
       ours = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about it now\nthis is the last line\n"
       theirs = "this is some text\nanother line of text\none more good line\nthats ABOUT it now\nthis is the last line\n"
-      expected_result = [
-        {type: :non_conflict, text: "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"}]
+      expected_result = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"
       result = Dyph3::Differ.merge_text(ours, base, theirs)
       expect(result).to eq(expected_result)
     end
@@ -144,38 +139,31 @@ describe Dyph3::Differ do
     non_trailing = "hi\nthis is text"
     it 'should not have a trailing newline where expected' do
       result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, non_trailing)
-      expect(result1.length).to eq(1)
-      expect(result1[0][:text][-1]).to_not eq("\n")
+      expect(result1[-1]).to_not eq("\n")
       
       result2 = Dyph3::Differ.merge_text(non_trailing, trailing, non_trailing)
-      expect(result2.length).to eq(1)
-      expect(result2[0][:text][-1]).to_not eq("\n")
+      expect(result2[-1]).to_not eq("\n")
       
       result3 = Dyph3::Differ.merge_text(non_trailing, trailing, trailing)
-      expect(result3.length).to eq(1)
-      expect(result3[0][:text][-1]).to_not eq("\n")
+      expect(result3[-1]).to_not eq("\n")
       
       result4 = Dyph3::Differ.merge_text(trailing, trailing, non_trailing)
-      expect(result4.length).to eq(1)
-      expect(result4[0][:text][-1]).to_not eq("\n")
+      expect(result4[-1]).to_not eq("\n")
     end
 
     it 'should have a trailing newline where expected' do
       result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, trailing)
-      expect(result1.length).to eq(1)
-      expect(result1[0][:text][-1]).to eq("\n")
+      expect(result1).to eq(trailing)
+      expect(result1[-1]).to eq("\n")
 
       result2 = Dyph3::Differ.merge_text(trailing, non_trailing, non_trailing)
-      expect(result2.length).to eq(1)
-      expect(result2[0][:text][-1]).to eq("\n")
+      expect(result2[-1]).to eq("\n")
 
       result3 = Dyph3::Differ.merge_text(trailing, non_trailing, trailing)
-      expect(result3.length).to eq(1)
-      expect(result3[0][:text][-1]).to eq("\n")
+      expect(result3[-1]).to eq("\n")
 
       result4 = Dyph3::Differ.merge_text(trailing, trailing, trailing)
-      expect(result4.length).to eq(1)
-      expect(result4[0][:text][-1]).to eq("\n")
+      expect(result4[-1]).to eq("\n")
       
     end
   end
