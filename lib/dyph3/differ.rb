@@ -12,6 +12,12 @@ module Dyph3
       result = handle_trailing_newline(yourtext, original, theirtext, result)
       result = merge_non_conflicts(result)
 
+      if result.length == 1
+        return result[0][:text]
+      else
+        return result
+      end
+
     end
 
 
