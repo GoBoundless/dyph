@@ -11,11 +11,18 @@ module Dyph3
       
       result = handle_trailing_newline(yourtext, original, theirtext, result)
       result = merge_non_conflicts(result)
+      test_out = {}
+      test_out[:body] = original
+      test_out[:result] = result
 
-      if result.length == 1
-        return result[0][:text]
+      if (result.length == 1 && result[0][:type] == :non_conflict) || (result.kind_of?(Hash) && result[:type] == :non_conflict)
+        if result[0].nil?
+          return result[:text]
+        else
+          return result[0][:text]
+        end
       else
-        return result
+        return test_out
       end
 
     end
