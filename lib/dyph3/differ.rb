@@ -9,8 +9,8 @@ module Dyph3
     def self.merge_text(yourtext, original, theirtext)
       result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
       
-      result = handle_trailing_newline(yourtext, original, theirtext, result)
-      result = merge_non_conflicts(result)
+      result = handle_trailing_newline(yourtext, original, theirtext, result) unless result.empty?
+      result = merge_non_conflicts(result) unless result.empty?
       test_out = {}
       test_out[:body] = original
       test_out[:result] = result
