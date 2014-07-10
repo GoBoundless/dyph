@@ -15,15 +15,14 @@ module Dyph3
       test_out[:body] = original
       test_out[:result] = result
 
-      #if there are no conflicts, simply return the string.
       if (result.length == 1 && result[0][:type] == :non_conflict) || (result.kind_of?(Hash) && result[:type] == :non_conflict)
         if result[0].nil?
-          return result[:text]
+          return [result[:text], false, [{type: :non_conflict, text: result[:text]}]]
         else
-          return result[0][:text]
+          return [result[0][:text], false, [{type: :non_conflict, text: result[0][:text]}]]
         end
       else
-        return test_out
+        return [original, true, result]
       end
 
     end
