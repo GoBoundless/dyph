@@ -107,7 +107,6 @@ module Dyph3
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
 
         res = interpret_chunk(res, chunk_desc, text3)
-        binding.pry
         
         #assign i2 to be the line in origtext after the conflict
         i2 = chunk_desc[6] + 1
@@ -115,7 +114,6 @@ module Dyph3
 
       #finish by putting all text after the last conflict into the resulting body.
       ending_text = accumulate_lines(i2, text3[2].length, text3[2])
-      binding.pry
       res << {type: :non_conflict, text: ending_text} unless ending_text.empty?
 
       res
@@ -246,6 +244,7 @@ module Dyph3
             conflict[:text] = accumulate_lines(r2[3], r2[4], text_b)
           end
 
+          conflict[:base] = "" if conflict[:type] == :conflict && conflict[:base].nil?
           ia = r2[2] + 1
           res << conflict
         end
