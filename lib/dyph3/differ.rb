@@ -15,6 +15,7 @@ module Dyph3
       test_out[:body] = original
       test_out[:result] = result
 
+      #if there are no conflicts, simply return the string.
       if (result.length == 1 && result[0][:type] == :non_conflict) || (result.kind_of?(Hash) && result[:type] == :non_conflict)
         if result[0].nil?
           return result[:text]
@@ -106,6 +107,7 @@ module Dyph3
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
 
         res = interpret_chunk(res, chunk_desc, text3)
+        binding.pry
         
         #assign i2 to be the line in origtext after the conflict
         i2 = chunk_desc[6] + 1
@@ -113,6 +115,7 @@ module Dyph3
 
       #finish by putting all text after the last conflict into the resulting body.
       ending_text = accumulate_lines(i2, text3[2].length, text3[2])
+      binding.pry
       res << {type: :non_conflict, text: ending_text} unless ending_text.empty?
 
       res
@@ -221,6 +224,7 @@ module Dyph3
           conflict[:ours] = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
           conflict[:base] = accumulate_lines(chunk_desc[5], chunk_desc[6], text3[2])
           conflict[:theirs] = accumulate_lines(chunk_desc[3], chunk_desc[4], text3[1])
+          binding.pry
           res << conflict
           return res
         end
@@ -231,6 +235,7 @@ module Dyph3
           if ia >= r2[1]
             non_conflict = {type: :non_conflict}
             non_conflict[:text] = accumulate_lines(ia, r2[1]+1, text_a)
+            binding.pry
             res << non_conflict
           end
           conflict = {}
@@ -244,11 +249,13 @@ module Dyph3
           end
 
           ia = r2[2] + 1
+          binding.pry
           res << conflict
         end
 
         final_text = accumulate_lines(ia, text_a.length + 1, text_a)
-        res << {type: :non_conflict, text: final_text}
+        binding.pry
+        res << {type: :non_conflict, text: final_text} unless final_text == "\n"
         res
       end
 
@@ -417,6 +424,8 @@ module Dyph3
         last = result[-1]
         if last[:type] == :non_conflict && last[:text] != "\n" 
           last[:text] += "\n" if add_trailing_newline?(ours, base, theirs)
+        elsif last[:type] == :non_conflict && last[:text] == "\n"
+          result = result[0...-1]
         elsif result[-1][:type] == :conflict
           last[:ours] += "\n" if ours[-1] == "\n"
           last[:theirs] += "\n" if theirs[-1] == "\n"
