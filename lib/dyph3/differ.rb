@@ -9,6 +9,8 @@ module Dyph3
     def self.merge_text(yourtext, original, theirtext)
       result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
       
+      return ["", false, [{type: :non_conflict, text: ""}]] if result.empty? #this happens when all texts are ""
+
       result = handle_trailing_newline(yourtext, original, theirtext, result) unless result.empty?
       result = merge_non_conflicts(result) unless result.empty?
       test_out = {}
@@ -24,6 +26,7 @@ module Dyph3
       else
         return [original, true, result]
       end
+
 
     end
 
