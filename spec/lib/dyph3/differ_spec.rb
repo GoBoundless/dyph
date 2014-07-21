@@ -58,6 +58,15 @@ describe Dyph3::Differ do
       result = Dyph3::Differ.merge_text(left, base, right)
       expect(result).to eq [left, false, [{type: :non_conflict, text: left}]]
     end
+
+    it "should handle empty strings" do
+      result = Dyph3::Differ.merge_text("", "", "")
+      expect(result).to eq ["", false, [{type: :non_conflict, text: ""}]]
+    end
+
+    it "should handle null entries" do
+      expect{Dyph3::Differ.merge_text(nil, nil, nil)}.to raise_error
+    end
   end
 
   describe 'should have conflict' do
@@ -144,6 +153,21 @@ describe Dyph3::Differ do
       result_reversed = Dyph3::Differ.merge_text(theirs, base, ours)
       expect(result_reversed).to eq(expected_result_reversed)
     end
+
+    it 'should handle a conflict, non_conflict, conflict pattern' do
+      our_text = "A\nB\nC\n"
+      their_text = "a\nB\nc\n"
+      base_text = "aa\nB\ncc\n"
+      result = Dyph3::Differ.merge_text(our_text, base_text, their_text)
+      expected_result = [
+        base_text, 
+        true, 
+        [{type: :conflict, ours: "A\n", base: "aa\n", theirs: "a\n" },
+        {type: :non_conflict, text: "B\n"},
+        {type: :conflict, ours: "C\n", base: "cc\n", theirs: "c\n" }]]
+      expect(result).to eq (expected_result)
+    end
+
     it 'should hanlde periodic conflicts' do
       base   += "woohoo!\n"
       ours    = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about IT now\nthis is the last line\nWOOHOO!\n"
