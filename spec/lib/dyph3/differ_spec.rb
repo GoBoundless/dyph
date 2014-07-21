@@ -121,7 +121,7 @@ describe Dyph3::Differ do
       expect(result).to eq(expected_result)
     end
     it 'should handle overlapping conflicts' do
-      ours = "this is some text\nanother LINE of text\none more GREAT line\nthats about it now\nthis is the last line\n"
+      ours   = "this is some text\nanother LINE of text\none more GREAT line\nthats about it now\nthis is the last line\n"
       theirs = "this is some text\nanother line of text\none more GOOD line\nthats ABOUT it now\nthis is the last line\n"
       expected_result = [
         base,
@@ -144,9 +144,25 @@ describe Dyph3::Differ do
       result_reversed = Dyph3::Differ.merge_text(theirs, base, ours)
       expect(result_reversed).to eq(expected_result_reversed)
     end
+    it 'should hanlde periodic conflicts' do
+      base   += "woohoo!\n"
+      ours    = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about IT now\nthis is the last line\nWOOHOO!\n"
+      theirs  = "this is some text\nanother LINE of text\none more good line\nthats ABOUT it now\nthis is the last line\nwooHOO!\n"
+      expected_result = [base, true, 
+        [{type: :non_conflict, text: "this is some text\n"},
+         {type: :conflict, ours:"ANOTHER LINE OF TEXT\n",  base: "another line of text\n", theirs:"another LINE of text\n"},
+         {type: :non_conflict, text: "one more good line\n"},
+         {type: :conflict, ours:"thats about IT now\n", base:"thats about it now\n", theirs: "thats ABOUT it now\n"},
+         {type: :non_conflict, text: "this is the last line\n"},
+         {type: :conflict, ours: "WOOHOO!\n", base:"woohoo!\n", theirs:"wooHOO!\n"}]]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq expected_result
+    end
+
     it 'should handle non overlapping changes without conflicts' do
-      ours = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about it now\nthis is the last line\n"
-      theirs = "this is some text\nanother line of text\none more good line\nthats ABOUT it now\nthis is the last line\n"
+      base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+      ours            = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about it now\nthis is the last line\n"
+      theirs          = "this is some text\nanother line of text\none more good line\nthats ABOUT it now\nthis is the last line\n"
       expected_string = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"
       expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
       result = Dyph3::Differ.merge_text(ours, base, theirs)
