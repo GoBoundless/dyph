@@ -29,6 +29,12 @@ describe Dyph3::Differ do
       expect(result).to eq [left, false, [{type: :non_conflict, text: left}]]
     end
 
+    it "should not be conflicted with the same text" do
+      result = Dyph3::Differ.merge_text(left, left, left)
+      expecting = left
+      expect(result).to eq [left, false, [{type: :non_conflict, text: left}]]
+    end
+
     it "should not be conflicted when not conflicted" do
       result = Dyph3::Differ.merge_text(base, base, base)
       expect(result).to eq [base, false, [{type: :non_conflict, text: base}]]
