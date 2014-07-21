@@ -7,6 +7,8 @@ module Dyph3
     end
 
     def self.merge_text(yourtext, original, theirtext)
+      valid_arguments = [yourtext, original, theirtext].inject(true){ |memo, arg| memo && arg.is_a?(String) }
+      raise ArgumentError, "Argument is not a string." unless valid_arguments
       result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
       
       return ["", false, [{type: :non_conflict, text: ""}]] if result.empty? #this happens when all texts are ""

@@ -64,8 +64,13 @@ describe Dyph3::Differ do
       expect(result).to eq ["", false, [{type: :non_conflict, text: ""}]]
     end
 
-    it "should handle null entries" do
+    it "should handle null inputs" do
       expect{Dyph3::Differ.merge_text(nil, nil, nil)}.to raise_error
+    end
+
+    it "should handle non string inputs" do
+      expect{Dyph3::Differ.merge_text("hi", "hello", 3)}.to raise_error
+      expect{Dyph3::Differ.merge_text("hi", {hi: "there"}, 3)}.to raise_error
     end
   end
 
