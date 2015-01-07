@@ -250,7 +250,7 @@ module Dyph3
 
           conflict[:base] = "" if conflict[:type] == :conflict && conflict[:base].nil?
           ia = r2[2] + 1
-          res << conflict
+          res << conflict unless conflict.empty?
         end
 
         final_text = accumulate_lines(ia, text_a.length + 1, text_a)

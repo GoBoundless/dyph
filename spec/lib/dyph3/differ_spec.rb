@@ -198,6 +198,16 @@ describe Dyph3::Differ do
       expect(result).to eq(expected_result)
     end
 
+    it "should handle both sides deleting, but one side deleting more" do
+      base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+      ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+      theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+      expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+      expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
+      result = Dyph3::Differ.merge_text(ours, base, theirs)
+      expect(result).to eq(expected_result)
+    end
+
     it 'should handle a creation of two different things' do
       ours = 'apple'
       base = ''
