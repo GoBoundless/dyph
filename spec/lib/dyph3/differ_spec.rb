@@ -198,14 +198,26 @@ describe Dyph3::Differ do
       expect(result).to eq(expected_result)
     end
 
-    it "should handle both sides deleting, but one side deleting more" do
-      base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-      ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-      theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-      expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-      expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
-      result = Dyph3::Differ.merge_text(ours, base, theirs)
-      expect(result).to eq(expected_result)
+    context "both sides deleting, but one side deleting more" do
+      it "partial deletion of the first half of a line" do
+        base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+        ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+        theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+        expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+        expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
+        result = Dyph3::Differ.merge_text(ours, base, theirs)
+        expect(result).to eq(expected_result)
+      end
+
+      it "partial deletion of the second half of a line" do
+        base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+        ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+        theirs          = "this is\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+        expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
+        expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
+        result = Dyph3::Differ.merge_text(ours, base, theirs)
+        expect(result).to eq(expected_result)
+      end
     end
 
     it 'should handle a creation of two different things' do
@@ -249,6 +261,33 @@ describe Dyph3::Differ do
       result4 = Dyph3::Differ.merge_text(trailing, trailing, trailing)
       expect(result4[0][-1]).to eq("\n")
       
+    end
+  end
+  
+  describe "problems" do
+    # BUGBUG: This is a valid test, but it's currently broken
+    # it "shouldn't lose data when there are multiple newlines in a row in base" do
+    #   base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
+    #   left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
+    #   right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
+
+    #   # result = Dyph3::Differ.merge_text(left.gsub(/\n+/, "\n"), base.gsub(/\n+/, "\n"), right.gsub(/\n+/, "\n"))
+    #   result = nil
+    #   expect { result = Dyph3::Differ.merge_text(left, base, right) }.to_not raise_error
+      
+    #   expect(result[0]).to include("30835")
+    #   expect(result[0]).to include("30836")
+    # end
+    
+    it "should catch when we lose data" do
+      # BUGBUG: We shouldn't lose data, but we currently do. This test verifies we detect when it happens.
+      # If we stop losing data (see above commented out test) this test will stop working, but that would be
+      # a good thing!
+      base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
+      left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
+      right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
+
+      expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
     end
   end
 end

@@ -1,3 +1,5 @@
+# coding=UTF-8
+
 """
     From : http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
     @file  diff3.py
