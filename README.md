@@ -1,5 +1,6 @@
 diff3
 =====
+[![Build Status](https://travis-ci.org/GoBoundless/dyph3.svg)](https://travis-ci.org/GoBoundless/dyph3)
 
 An implementation of the diff3 algorithm in Ruby
 
