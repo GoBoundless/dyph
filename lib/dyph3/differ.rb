@@ -2,57 +2,67 @@ module Dyph3
   class Differ
     # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
-    def self.diff3_text(yourtext, original, theirtext)
-      diff3(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
+    def self.diff3_text(left, base, right)
+      diff3(left.split("\n"), base.split("\n"), right.split("\n"))
     end
 
-    def self.merge_text(yourtext, original, theirtext)
-      valid_arguments = [yourtext, original, theirtext].inject(true){ |memo, arg| memo && arg.is_a?(String) }
+    def self.merge_text(left, base, right)
+      valid_arguments = [left, base, right].inject(true){ |memo, arg| memo && arg.is_a?(String) }
       raise ArgumentError, "Argument is not a string." unless valid_arguments
-      result = merge(yourtext.split("\n"), original.split("\n"), theirtext.split("\n"))
       
-      return ["", false, [{type: :non_conflict, text: ""}]] if result.empty? #this happens when all texts are ""
-
-      result = handle_trailing_newline(yourtext, original, theirtext, result) unless result.empty?
-      result = merge_non_conflicts(result) unless result.empty?
-      test_out = {}
-      test_out[:body] = original
-      test_out[:result] = result
-
-      if (result.length == 1 && result[0][:type] == :non_conflict) || (result.kind_of?(Hash) && result[:type] == :non_conflict)
-        if result[0].nil?
-          return [result[:text], false, [{type: :non_conflict, text: result[:text]}]]
-        else
-          return [result[0][:text], false, [{type: :non_conflict, text: result[0][:text]}]]
-        end
+      merge_result = merge(left.split("\n"), base.split("\n"), right.split("\n"))
+      
+      if merge_result.empty?
+        # this happens when all texts are ""
+        text = ""
+        conflict = false
+        final_result = [{type: :non_conflict, text: ""}]
       else
-        return [original, true, result]
+        merge_result = handle_trailing_newline(left, base, right, merge_result)
+        merge_result = merge_non_conflicts(merge_result)
+        
+        if (merge_result.length == 1 && merge_result[0][:type] == :non_conflict) || (merge_result.kind_of?(Hash) && merge_result[:type] == :non_conflict)
+          conflict = false
+          if merge_result[0].nil?
+            text = merge_result[:text]
+            final_result = [{type: :non_conflict, text: merge_result[:text]}]
+          else
+            text = merge_result[0][:text]
+            final_result = [{type: :non_conflict, text: merge_result[0][:text]}]
+          end
+        else
+          text = base
+          conflict = true
+          final_result = merge_result
+        end
+
       end
-
-
+      
+      # sanity check: make sure anything new in left or right made it through the merge
+      return_value = [text, conflict, final_result]
+      ensure_no_lost_data(left, base, right, return_value)
+      return_value
     end
-
-
 
     # Three-way diff based on the GNU diff3.c by R. Smith.
-    #   @param [in] yourtext    Array of lines of your text.
-    #   @param [in] origtext    Array of lines of original text.
-    #   @param [in] theirtext   Array of lines of their text.
+    #   @param [in] left    Array of lines of your text.
+    #   @param [in] origtext    Array of lines of base text.
+    #   @param [in] right   Array of lines of their text.
     #   @returns Array of tuples containing diff results. The tuples consist of
     #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
     #        '0', '1', '2', or 'A'.
-    def self.diff3(yourtext, origtext, theirtext)
+    def self.diff3(left, origtext, right)
       # diff result => [(cmd, loA, hiA, loB, hiB), ..]
       d2 = {
-        your: diff(origtext, yourtext), # queue of conflicts with your
-        their: diff(origtext, theirtext) # queue of conflicts with their
+        your: diff(origtext, left), # queue of conflicts with your
+        their: diff(origtext, right) # queue of conflicts with their
       }
       result_diff3 = []
       chunk_desc = [nil,  0, 0,  0, 0,  0, 0]
       # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB) 
       while d2[:your].length > 0 || d2[:their].length > 0
         # find a continual range in origtext lo2...hi2
-        # changed by yourtext or by theirtext.
+        # changed by left or by right.
         #
         #     d2[:your]            222    222222222
         #  origtext             ..L!!!!!!!!!!!!!!!!!!!!H..
@@ -84,7 +94,7 @@ module Dyph3
 
         your_lo, your_hi, their_lo, their_hi = determine_ranges(r2, chunk_desc, lo2, hi2)
 
-        conflict_type = determine_conflict_type(r2, yourtext, theirtext, your_lo, your_hi, their_lo, their_hi)
+        conflict_type = determine_conflict_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
 
         result_diff3 << [conflict_type,  your_lo, your_hi,  their_lo, their_hi,  lo2, hi2]
       end
@@ -92,16 +102,16 @@ module Dyph3
       result_diff3
     end
 
-    def self.merge(yourtext, origtext, theirtext)
+    def self.merge(left, origtext, right)
       res = []
 
-      d3 = diff3(yourtext, origtext, theirtext)
+      d3 = diff3(left, origtext, right)
 
-      text3 = [yourtext, theirtext, origtext]
+      text3 = [left, right, origtext]
       i2 = 1
       d3.each do |chunk_desc|
         #chunk_desc[5] is the line that this new conflict starts
-        #put original text from lines i2 ... chunk_desc[5] into the resulting body.
+        #put base text from lines i2 ... chunk_desc[5] into the resulting body.
         #initial_text = accumulate_lines(i2, chunk_desc[5] + 1, text3[2])
         initial_text = []
         (i2 ... chunk_desc[5]).each do |lineno|                  # exclusive (...)
@@ -212,11 +222,11 @@ module Dyph3
 
       # called only in cases where there may be a conflict
       def self._conflict_range(text3, chunk_desc, res)
-        text_a = [] # conflicting lines in theirtext
+        text_a = [] # conflicting lines in right
         (chunk_desc[3] .. chunk_desc[4]).each do |i|                   # inclusive(..)
           text_a << text3[1][i - 1]
         end
-        text_b = [] # conflicting lines in yourtext
+        text_b = [] # conflicting lines in left
         (chunk_desc[1] .. chunk_desc[2]).each do |i|                   # inclusive(..)
           text_b << text3[0][i - 1]
         end
@@ -262,11 +272,11 @@ module Dyph3
 
       def self.interpret_chunk(res, chunk_desc, text3)
         if chunk_desc[0] == '0'
-          # 0 flag means choose yourtext.  put lines chunk_desc[1] .. chunk_desc[2] into the resulting body.
+          # 0 flag means choose left.  put lines chunk_desc[1] .. chunk_desc[2] into the resulting body.
           temp_text = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
           res << {type: :non_conflict, text: temp_text}
         elsif chunk_desc[0] != 'A'
-          # A flag means choose theirtext.  put lines chunk_desc[3] to chunk_desc[4] into the resulting body.
+          # A flag means choose right.  put lines chunk_desc[3] to chunk_desc[4] into the resulting body.
           temp_text = accumulate_lines(chunk_desc[3], chunk_desc[4], text3[1])
           res << {type: :non_conflict, text: temp_text}
         else
@@ -288,14 +298,14 @@ module Dyph3
         nil
       end
 
-      # take the corresponding ranges in yourtext lo0...hi0
-      # and in theirtext lo1...hi1.
+      # take the corresponding ranges in left lo0...hi0
+      # and in right lo1...hi1.
       #
-      #   yourtext     ...L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H..
+      #   left         ...L!!!!!!!!!!!!!!!!!!!!!!!!!!!!H..
       #   d2[:your]       222    222222222
       #   origtext     ..00!1111!000!!00!111111..
       #   d2[:their]        222222   22  2222222
-      #  theirtext          ..L!!!!!!!!!!!!!!!!H..
+      #   right         ..L!!!!!!!!!!!!!!!!H..
       def self.determine_ranges(r2, chunk_desc, lo2, hi2)
         if !r2[:your].empty?
           your_lo = r2[:your][ 0][3] - r2[:your][ 0][1] + lo2
@@ -315,7 +325,7 @@ module Dyph3
       end
 
 
-      def self.determine_conflict_type(r2, yourtext, theirtext, your_lo, your_hi, their_lo, their_hi)
+      def self.determine_conflict_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
         # detect type of changes
         if r2[:your].empty?
           cmd = '1'
@@ -327,9 +337,9 @@ module Dyph3
           cmd = '2'
           (0 .. your_hi - your_lo).each do |d|
             (i0, i1) = [your_lo + d - 1, their_lo + d - 1]
-            ok0 = (0 <= i0 && i0 < yourtext.length)
-            ok1 = (0 <= i1 && i1 < theirtext.length)
-            if (ok0 ^ ok1) || (ok0 && yourtext[i0] != theirtext[i1])
+            ok0 = (0 <= i0 && i0 < left.length)
+            ok1 = (0 <= i1 && i1 < right.length)
+            if (ok0 ^ ok1) || (ok0 && left[i0] != right[i1])
               cmd = 'A'
               break
             end
@@ -433,5 +443,72 @@ module Dyph3
         end
         result
       end
+
+      def self.ensure_no_lost_data(left, base, right, return_value)
+        final_result = return_value[2]
+
+        result_word_map = {}
+
+        final_result.each do |result_block|
+          block_text = case result_block[:type]
+            when :non_conflict then result_block[:text]
+            when :conflict then "#{result_block[:ours]} #{result_block[:theirs]}"
+            else raise "Unknown block type, #{result_block[:type]}"
+          end
+          
+          count_words(block_text, result_word_map)
+        end
+
+        left_word_map, base_word_map, right_word_map = [left, base, right].map { |str| count_words(str) }
+
+        # new words are words that are in left or right, but not in base
+        new_left_words = subtract_words(left_word_map, base_word_map)
+        new_right_words = subtract_words(right_word_map, base_word_map)
+
+        # now make sure all new words are somewhere in the result
+        missing_new_left_words = subtract_words(new_left_words, result_word_map)
+        missing_new_right_words = subtract_words(new_right_words, result_word_map)
+
+        if missing_new_left_words.any? || missing_new_right_words.any?
+          raise BadMergeException.new(return_value)
+        end
+      end
+
+      def self.count_words(str, hash={})
+        str.split(/\s+/).reduce(hash) do |map, word|
+          map[word] ||= 0
+          map[word] += 1
+          map
+        end
+      end
+
+      def self.subtract_words(left_map, right_map)
+        remaining_words = {}
+        
+        left_map.each do |word, count|
+          count_in_right = right_map[word] || 0
+          
+          new_count = count - count_in_right
+          remaining_words[word] = new_count if new_count > 0
+        end
+        
+        remaining_words
+      end
+  end
+  
+  class BadMergeException < StandardError
+    attr_accessor :merge_result
+
+    def initialize(merge_result)
+      @merge_result = merge_result
+    end
+
+    def inspect
+      "<#{self.class}: #{merge_result}>"
+    end
+
+    def to_s
+      inspect
+    end
   end
 end
