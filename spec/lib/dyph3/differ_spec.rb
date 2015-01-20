@@ -1,6 +1,4 @@
-require "dyph3"
-require "pry"
-require "awesome_print"
+require 'spec_helper'
 
 describe Dyph3::Differ do
   describe "test" do
