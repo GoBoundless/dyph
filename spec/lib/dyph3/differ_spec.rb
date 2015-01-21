@@ -277,15 +277,26 @@ describe Dyph3::Differ do
     #   expect(result[0]).to include("30836")
     # end
     
-    it "should catch when we lose data" do
+    context "losing data" do
       # BUGBUG: We shouldn't lose data, but we currently do. This test verifies we detect when it happens.
       # If we stop losing data (see above commented out test) this test will stop working, but that would be
       # a good thing!
-      base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
-      left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
-      right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
+      
+      it "should catch when we lose data due to multiple newlines" do
+        base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
+        left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
+        right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
 
-      expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
+        expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
+      end
+      
+      it "should catch when we lose data due to whitespace at the beginning of lines and both sides change base" do
+        base  = "\n<p>\n Some stuffi\nAnd another line here\n</p>\n"
+        left  = "\n<p>\nSome stuff\nAdded a line here\nAnd another line here\n</p>\n"
+        right = "\n<p>\nSome stuff\nAnd another line here\n</p>\nMore stuff here\n"
+        
+        expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
+      end
     end
   end
 end
