@@ -121,7 +121,7 @@ module Dyph3
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
 
         res = interpret_chunk(res, chunk_desc, text3)
-        
+
         #assign i2 to be the line in origtext after the conflict
         i2 = chunk_desc[6] + 1
       end
@@ -243,11 +243,12 @@ module Dyph3
         ia = 1
 
         d.each do |r2|
-          if ia > r2[1]
+          (ia ... r2[1]).each do |lineno|
             non_conflict = {type: :non_conflict}
-            non_conflict[:text] = accumulate_lines(ia, r2[1]+1, text_a)
+            non_conflict[:text] = accumulate_lines(ia, lineno, text_a)
             res << non_conflict
           end
+
           conflict = {}
           if r2[0] == 'c'
             conflict[:type] =  :conflict
@@ -312,7 +313,7 @@ module Dyph3
           your_hi = r2[:your][-1][4] - r2[:your][-1][2] + hi2
         else
           your_lo = chunk_desc[2] - chunk_desc[6] + lo2
-          your_hi0 = chunk_desc[2] - chunk_desc[6] + hi2
+          your_hi = chunk_desc[2] - chunk_desc[6] + hi2
         end
         if !r2[:their].empty?
           their_lo = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2

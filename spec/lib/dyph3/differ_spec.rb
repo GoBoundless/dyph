@@ -289,13 +289,15 @@ describe Dyph3::Differ do
 
         expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
       end
-      
+
       it "should catch when we lose data due to whitespace at the beginning of lines and both sides change base" do
         base  = "\n<p>\n Some stuffi\nAnd another line here\n</p>\n"
         left  = "\n<p>\nSome stuff\nAdded a line here\nAnd another line here\n</p>\n"
         right = "\n<p>\nSome stuff\nAnd another line here\n</p>\nMore stuff here\n"
-        
-        expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
+
+        result = Dyph3::Differ.merge_text(left, base, right)
+        expect(result[0]).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
+        #expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
       end
     end
   end
