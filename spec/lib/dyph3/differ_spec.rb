@@ -297,7 +297,6 @@ describe Dyph3::Differ do
 
         result = Dyph3::Differ.merge_text(left, base, right)
         expect(result[0]).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
-        #expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
       end
     end
   end
