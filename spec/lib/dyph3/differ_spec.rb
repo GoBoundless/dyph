@@ -258,10 +258,19 @@ describe Dyph3::Differ do
 
       result4 = Dyph3::Differ.merge_text(trailing, trailing, trailing)
       expect(result4[0][-1]).to eq("\n")
-      
+
+    end
+
+    it "should work even when there is whitespace at the beginning of lines and both sides change base" do
+      base  = "\n<p>\n Some stuffi\nAnd another line here\n</p>\n"
+      left  = "\n<p>\nSome stuff\nAdded a line here\nAnd another line here\n</p>\n"
+      right = "\n<p>\nSome stuff\nAnd another line here\n</p>\nMore stuff here\n"
+
+      result = Dyph3::Differ.merge_text(left, base, right)
+      expect(result[0]).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
     end
   end
-  
+
   describe "problems" do
     # BUGBUG: This is a valid test, but it's currently broken
     # it "shouldn't lose data when there are multiple newlines in a row in base" do
@@ -272,31 +281,20 @@ describe Dyph3::Differ do
     #   # result = Dyph3::Differ.merge_text(left.gsub(/\n+/, "\n"), base.gsub(/\n+/, "\n"), right.gsub(/\n+/, "\n"))
     #   result = nil
     #   expect { result = Dyph3::Differ.merge_text(left, base, right) }.to_not raise_error
-      
+
     #   expect(result[0]).to include("30835")
     #   expect(result[0]).to include("30836")
     # end
-    
     context "losing data" do
       # BUGBUG: We shouldn't lose data, but we currently do. This test verifies we detect when it happens.
       # If we stop losing data (see above commented out test) this test will stop working, but that would be
       # a good thing!
-      
       it "should catch when we lose data due to multiple newlines" do
         base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
         left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
         right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
 
-        expect { result = Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
-      end
-
-      it "should catch when we lose data due to whitespace at the beginning of lines and both sides change base" do
-        base  = "\n<p>\n Some stuffi\nAnd another line here\n</p>\n"
-        left  = "\n<p>\nSome stuff\nAdded a line here\nAnd another line here\n</p>\n"
-        right = "\n<p>\nSome stuff\nAnd another line here\n</p>\nMore stuff here\n"
-
-        result = Dyph3::Differ.merge_text(left, base, right)
-        expect(result[0]).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
+        expect { Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
       end
     end
   end
