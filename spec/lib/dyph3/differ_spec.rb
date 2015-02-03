@@ -201,18 +201,29 @@ describe Dyph3::Differ do
         base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
         ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
         theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-        expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-        expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
+
+        expected_result = ["this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n",
+          true,
+          [{:type=>:conflict, :ours=>"\n", :base=>"this is some text\n", :theirs=>"some text\n"},
+          {:type=>:non_conflict, :text=>"another line of text\none more good line\nthats about it now\nthis is the last line\n"}]
+        ]
         result = Dyph3::Differ.merge_text(ours, base, theirs)
         expect(result).to eq(expected_result)
       end
 
       it "partial deletion of the second half of a line" do
-        base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-        ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-        theirs          = "this is\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-        expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-        expected_result = [expected_string, false, [{type: :non_conflict, text: expected_string }]]
+        base            = "thats about it now\nthis is the last line\nthis is some text\nanother line of text\none more good line\n"
+        ours            = "thats about it now\nthis is the last line\nanother line of text\none more good line\n"
+        theirs          = "thats about it now\nthis is the last line\nthis is\nanother line of text\none more good line\n"
+     #   expected_string = "thats about it now\nthis is the last line\nanother line of text\none more good line\n"
+        expected_result = ["thats about it now\nthis is the last line\nthis is some text\nanother line of text\none more good line\n",
+          true,
+          [{:type=>:non_conflict, :text=>"thats about it now\nthis is the last line\n"},
+           {:type=>:conflict,
+            :ours=>"\n",
+            :base=>"this is some text\n",
+            :theirs=>"this is\n"},
+           {:type=>:non_conflict, :text=>"another line of text\none more good line\n"}]]
         result = Dyph3::Differ.merge_text(ours, base, theirs)
         expect(result).to eq(expected_result)
       end
@@ -223,7 +234,7 @@ describe Dyph3::Differ do
       base = ''
       theirs = 'apricot'
       result = Dyph3::Differ.merge_text(ours,base,theirs)
-      expected_result = ["", true, [{type: :conflict, ours: "apple", base: "", theirs: "apricot"}]]
+      expected_result = ["", true, [{type: :conflict, ours: "apple", base: "\n", theirs: "apricot"}]]
       expect(result).to eq(expected_result)
     end
   end
@@ -293,9 +304,16 @@ describe Dyph3::Differ do
         base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
         left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
         right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
-
-        expect { Dyph3::Differ.merge_text(left, base, right) }.to raise_error(Dyph3::BadMergeException)
-      end
+        expected_result = [
+          base,
+          true,
+        [ {type: :non_conflict, text: "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n"},
+          {type: :conflict, ours: "\n",
+                            theirs: "<figref id=\"30836\"></figref>\n",
+                            base: "\n\n"},
+          {type: :non_conflict, text: "</p>\n"}]]
+          expect(Dyph3::Differ.merge_text(left, base, right)).to eql expected_result
+        end
     end
   end
 end

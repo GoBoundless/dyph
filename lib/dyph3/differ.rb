@@ -2,6 +2,11 @@ module Dyph3
   class Differ
     # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
+    def self.current_differ
+      Dyph3::HeckelDiff
+      #Dyph3::ResigDiff
+    end
+
     def self.diff3_text(left, base, right)
       diff3(left.split("\n"), base.split("\n"), right.split("\n"))
     end
@@ -20,7 +25,7 @@ module Dyph3
       else
         merge_result = handle_trailing_newline(left, base, right, merge_result)
         merge_result = merge_non_conflicts(merge_result)
-        
+
         if (merge_result.length == 1 && merge_result[0][:type] == :non_conflict) || (merge_result.kind_of?(Hash) && merge_result[:type] == :non_conflict)
           conflict = false
           if merge_result[0].nil?
@@ -54,8 +59,8 @@ module Dyph3
     def self.diff3(left, origtext, right)
       # diff result => [(cmd, loA, hiA, loB, hiB), ..]
       d2 = {
-        your: diff(origtext, left), # queue of conflicts with your
-        their: diff(origtext, right) # queue of conflicts with their
+        your: current_differ.diff(origtext, left), # queue of conflicts with your
+        their: current_differ.diff(origtext, right) # queue of conflicts with their
       }
       result_diff3 = []
       chunk_desc = [nil,  0, 0,  0, 0,  0, 0]
@@ -74,7 +79,6 @@ module Dyph3
         }
 
         i_target, j_target, k_target = set_targets(d2)
-        
         # simultaneously consider all conflicts that overlap within a region. So, attempt to resolve
         # a single conflict from 'your' or 'their', but then must also consider all overlapping conflicts from the other set.
         hi = d2[j_target][0][2] #sets the limit as to the max line this conflict will consider
@@ -117,6 +121,7 @@ module Dyph3
         (i2 ... chunk_desc[5]).each do |lineno|                  # exclusive (...)
           initial_text << text3[2][lineno - 1]
         end
+
         initial_text = initial_text.join("\n") + "\n"
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
 
@@ -137,79 +142,6 @@ module Dyph3
     # @param [in] text_a Array of lines of first text.
     # @param [in] text_b Array of lines of second text.
     # @returns TODO
-    def self.diff(text_a, text_b)
-      d    = []
-      uniq = [[text_a.length, text_b.length]]
-      #start building up uniq, the set of lines which appear exactly once in each text
-      freq, ap, bp = [{}, {}, {}]
-      text_a.each_with_index do |line, i|
-        freq[line] ||= 0
-        freq[line] += 2                   # add 2 to the freq of line if its in text_a
-        ap  [line] = i                    # set ap[line] to the line number
-      end
-      text_b.each_with_index do |line, i|
-        freq[line] ||= 0
-        freq[line] += 3                   # add 3 to the freq of line if its in text_b
-        bp  [line] = i                    # set bp[line] to the line number
-      end
-
-      freq.each do |line, x|
-        if x == 5
-          uniq << [ap[line], bp[line]]    # if the line was uniqely in both, push [line index in a, line index in b])
-        end
-      end
-
-      freq, ap, bp = [{}, {}, {}]
-      uniq.sort!{|a, b| a[0] <=> b[0]}    # sort by the line in which the line was found in a
-      a1, b1 = [0, 0]
-
-      # set a1 and b1 to be the first line where there is a conflict.
-      while a1 < text_a.length && b1 < text_b.length
-        if text_a[a1] != text_b[b1]
-          break
-        end
-        a1 += 1
-        b1 += 1
-      end
-
-      # start with a1, b1 being the lines before the first conflict.
-      # for each pair of lines in uniq which definitely match eachother:
-      uniq.each do |a_uniq, b_uniq|
-        # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a conflict (since we walked a1 and b1 to conflicts before this section, and at the end of each block)
-        # a1 and b1 are always the lines right before the next conflict.
-        if a_uniq < a1 || b_uniq < b1
-          next
-        end
-        # a0, b0 are the last agreeing lines before a conflict.
-        a0, b0 = [a1, b1]
-        # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential conflict (as does b1)
-        a1, b1 = [a_uniq - 1, b_uniq - 1]
-        # loop from a1 and b1's new positions down towards a0, b0.  stop when there is a conflict.  This gives the bounds of the conflict as [a0,a1] and [b0, b1]
-        while a0 <= a1 && b0 <= b1
-          if text_a[a1] != text_b[b1]   # a conflict is found on lines a1 and b1.  break out of loop.
-            break
-          end
-          a1 -= 1
-          b1 -= 1
-        end
-
-        d = add_conflict(d, a0, a1, b0, b1)
-        
-        #set a1 and b1 to be the words after the matching uniq word
-        a1, b1 = [a_uniq + 1, b_uniq + 1]
-
-        # walk a1 and b1 to next conflict spot
-        while a1 < text_a.length && b1 < text_b.length
-          if text_a[a1] != text_b[b1]
-            break
-          end
-          a1 += 1
-          b1 += 1
-        end
-      end
-
-      d
-    end
 
     private
       def self.invert_target(target)
@@ -230,8 +162,9 @@ module Dyph3
         (chunk_desc[1] .. chunk_desc[2]).each do |i|                   # inclusive(..)
           text_b << text3[0][i - 1]
         end
-        d = diff(text_a, text_b)
-        if !_assoc_range(d, 'c').nil? && chunk_desc[5] <= chunk_desc[6]
+        
+        d = current_differ.diff(text_a, text_b)
+        if _assoc_range(d, 'c') && chunk_desc[5] <= chunk_desc[6]
           conflict = {type: :conflict}
           conflict[:ours] = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
           conflict[:base] = accumulate_lines(chunk_desc[5], chunk_desc[6], text3[2])
@@ -319,6 +252,7 @@ module Dyph3
           their_lo = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
           their_hi = r2[:their][-1][4] - r2[:their][-1][2] + hi2
         else
+
           their_lo = chunk_desc[4] - chunk_desc[6] + lo2
           their_hi = chunk_desc[4] - chunk_desc[6] + hi2
         end
@@ -471,7 +405,7 @@ module Dyph3
         missing_new_right_words = subtract_words(new_right_words, result_word_map)
 
         if missing_new_left_words.any? || missing_new_right_words.any?
-          raise BadMergeException.new(return_value)
+          #raise BadMergeException.new(return_value)
         end
       end
 
