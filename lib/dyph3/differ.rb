@@ -3,7 +3,7 @@ module Dyph3
     # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
     def self.current_differ
-      Dyph3::HeckelDiff
+      Dyph3::TwoWayDiffers::HeckelDiff
       #Dyph3::ResigDiff
     end
 
@@ -14,9 +14,7 @@ module Dyph3
     def self.merge_text(left, base, right)
       valid_arguments = [left, base, right].inject(true){ |memo, arg| memo && arg.is_a?(String) }
       raise ArgumentError, "Argument is not a string." unless valid_arguments
-      
       merge_result = merge(left.split("\n"), base.split("\n"), right.split("\n"))
-      
       if merge_result.empty?
         # this happens when all texts are ""
         text = ""
@@ -139,10 +137,6 @@ module Dyph3
       res
     end
 
-    # Two-way diff based on the algorithm by P. Heckel.
-    # @param [in] text_a Array of lines of first text.
-    # @param [in] text_b Array of lines of second text.
-    # @returns TODO
 
     private
       def self.invert_target(target)
