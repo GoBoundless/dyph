@@ -234,7 +234,7 @@ describe Dyph3::Differ do
       base = ''
       theirs = 'apricot'
       result = Dyph3::Differ.merge_text(ours,base,theirs)
-      expected_result = ["", true, [{type: :conflict, ours: "apple", base: "\n", theirs: "apricot"}]]
+      expected_result = ["", true, [{type: :conflict, ours: "apple", base: "", theirs: "apricot"}]]
       expect(result).to eq(expected_result)
     end
   end

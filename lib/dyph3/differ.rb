@@ -113,6 +113,7 @@ module Dyph3
 
       text3 = [left, right, origtext]
       i2 = 1
+
       d3.each do |chunk_desc|
         #chunk_desc[5] is the line that this new conflict starts
         #put base text from lines i2 ... chunk_desc[5] into the resulting body.
@@ -154,6 +155,7 @@ module Dyph3
 
       # called only in cases where there may be a conflict
       def self._conflict_range(text3, chunk_desc, res)
+
         text_a = [] # conflicting lines in right
         (chunk_desc[3] .. chunk_desc[4]).each do |i|                   # inclusive(..)
           text_a << text3[1][i - 1]
@@ -162,9 +164,9 @@ module Dyph3
         (chunk_desc[1] .. chunk_desc[2]).each do |i|                   # inclusive(..)
           text_b << text3[0][i - 1]
         end
-        
+
         d = current_differ.diff(text_a, text_b)
-        if _assoc_range(d, 'c') && chunk_desc[5] <= chunk_desc[6]
+        if (_assoc_range(d, 'c') || _assoc_range(d, 'd')) && chunk_desc[5] <= chunk_desc[6]
           conflict = {type: :conflict}
           conflict[:ours] = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
           conflict[:base] = accumulate_lines(chunk_desc[5], chunk_desc[6], text3[2])
@@ -261,7 +263,6 @@ module Dyph3
 
 
       def self.determine_conflict_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
-        # detect type of changes
         if r2[:your].empty?
           cmd = '1'
         elsif r2[:their].empty?
@@ -274,6 +275,7 @@ module Dyph3
             (i0, i1) = [your_lo + d - 1, their_lo + d - 1]
             ok0 = (0 <= i0 && i0 < left.length)
             ok1 = (0 <= i1 && i1 < right.length)
+
             if (ok0 ^ ok1) || (ok0 && left[i0] != right[i1])
               cmd = 'A'
               break
@@ -281,18 +283,6 @@ module Dyph3
           end
         end
         cmd
-      end
-
-      # given the calculated bounds of the 2 way diff, create the proper conflict type and add it to the queue.
-      def self.add_conflict(d, a0, a1, b0, b1)
-        if a0 <= a1 && b0 <= b1 # for this conflict, the bounds are both 'normal'.  the beginning of the conflict is before the end.
-          d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
-        elsif a0 <= a1
-          d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
-        elsif b0 <= b1
-          d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
-        end
-        d
       end
 
       def self.set_targets(d2)

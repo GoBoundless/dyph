@@ -1,8 +1,21 @@
 module Dyph3
   class HeckelDiff
     def self.diff(text_a, text_b)
-      text_a = [''] if text_a.empty?
-      text_b = [''] if text_b.empty?
+      hack = false
+      # if p_text_a.empty?
+      #   hack = true
+      #   text_a = ['']
+      # else
+      #   text_a = p_text_a
+      # end
+
+      # if p_text_b.empty?
+      #   hack = true
+      #   text_b = [''] 
+      # else
+      #   text_b = p_text_b
+      # end
+      
       d = []
       uniq = [[text_a.length, text_b.length]]
       #binding.pry
@@ -41,6 +54,9 @@ module Dyph3
       uniq.each do |a_uniq, b_uniq|
         # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a change (since we walked a1 and b1 to changes before this section, and at the end of each block)
         # a1 and b1 are always the lines right before the next change.
+        
+        #binding.pry if hack
+
         if a_uniq < a1 || b_uniq < b1
           next
         end
@@ -56,7 +72,7 @@ module Dyph3
           a1 -= 1
           b1 -= 1
         end
-
+        #binding.pry if hack
         if a0 <= a1 && b0 <= b1 # for this change, the bounds are both 'normal'.  the beginning of the change is before the end.
           d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
         elsif a0 <= a1
