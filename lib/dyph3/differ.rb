@@ -395,7 +395,7 @@ module Dyph3
         missing_new_right_words = subtract_words(new_right_words, result_word_map)
 
         if missing_new_left_words.any? || missing_new_right_words.any?
-          #raise BadMergeException.new(return_value)
+          raise BadMergeException.new(return_value)
         end
       end
 

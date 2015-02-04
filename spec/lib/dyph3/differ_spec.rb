@@ -280,40 +280,20 @@ describe Dyph3::Differ do
       result = Dyph3::Differ.merge_text(left, base, right)
       expect(result[0]).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
     end
-  end
 
-  describe "problems" do
-    # BUGBUG: This is a valid test, but it's currently broken
-    # it "shouldn't lose data when there are multiple newlines in a row in base" do
-    #   base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
-    #   left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
-    #   right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
-
-    #   # result = Dyph3::Differ.merge_text(left.gsub(/\n+/, "\n"), base.gsub(/\n+/, "\n"), right.gsub(/\n+/, "\n"))
-    #   result = nil
-    #   expect { result = Dyph3::Differ.merge_text(left, base, right) }.to_not raise_error
-
-    #   expect(result[0]).to include("30835")
-    #   expect(result[0]).to include("30836")
-    # end
-    context "losing data" do
-      # BUGBUG: We shouldn't lose data, but we currently do. This test verifies we detect when it happens.
-      # If we stop losing data (see above commented out test) this test will stop working, but that would be
-      # a good thing!
-      it "should catch when we lose data due to multiple newlines" do
-        base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
-        left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
-        right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
-        expected_result = [
-          base,
-          true,
-        [ {type: :non_conflict, text: "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n"},
-          {type: :conflict, ours: "\n",
-                            theirs: "<figref id=\"30836\"></figref>\n",
-                            base: "\n\n"},
-          {type: :non_conflict, text: "</p>\n"}]]
-          expect(Dyph3::Differ.merge_text(left, base, right)).to eql expected_result
-        end
+    it "spot a conflict when left right and base don't agree" do
+      base = "Some stuff:\n<p>\nThis calculation can</p>\n\n\n</p>\n"
+      left = "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n</p>\n"
+      right = "Some stuff:\n<p>\nThis calculation can</p>\n<figref id=\"30836\"></figref>\n</p>\n"
+      expected_result = [
+        base,
+        true,
+      [ {type: :non_conflict, text: "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n"},
+        {type: :conflict, ours: "\n",
+                          theirs: "<figref id=\"30836\"></figref>\n",
+                          base: "\n\n"},
+        {type: :non_conflict, text: "</p>\n"}]]
+        expect(Dyph3::Differ.merge_text(left, base, right)).to eql expected_result
     end
   end
 end
