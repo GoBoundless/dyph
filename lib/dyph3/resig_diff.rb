@@ -1,4 +1,5 @@
 module Dyph3
+  #### THIS DOESN"T WORK DON"T USE IT!!!!!
   class ResigDiff
     def self.diff(text_a, text_b)
       o = text_a.dup
@@ -44,7 +45,6 @@ module Dyph3
     end
 
     def self.convert_to_merge_format(result: )
-      binding.pry
       result
     end
     #n[i].text != null && n[i+1].text == null && n[i].row + 1 < o.length && o[ n[i].row + 1 ].text == null && n[i+1] == o[ n[i].row + 1 ] )
@@ -64,8 +64,6 @@ module Dyph3
       n[i-1] == o[ n[i].row - 1 ]
     end
   end
-  
-  
 
   class TextNode
     attr_accessor :text, :row
