@@ -44,6 +44,7 @@ module Dyph3
             o[n[i].row - 1] = TextNode.new(text: o[n[i][:row]- 1], row: i - 1)
           end
         end
+        binding.pry
         { o: o, n: n}
       end
 
@@ -69,7 +70,13 @@ module Dyph3
       end
       
     end
-    class TextNode < Struct.new(:text, :row)
+    class TextNode
+      attr_accessor :text, :row
+      
+      def initialize(text:, row:)
+        @text = text
+        @row  = row
+      end
     end
   end
 end

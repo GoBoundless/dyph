@@ -4,7 +4,7 @@ module Dyph3
 
     def self.current_differ
       Dyph3::TwoWayDiffers::HeckelDiff
-      #Dyph3::ResigDiff
+      #Dyph3::TwoWayDiffers::ResigDiff
     end
 
     def self.diff3_text(left, base, right)

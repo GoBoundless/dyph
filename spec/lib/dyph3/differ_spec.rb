@@ -171,7 +171,7 @@ describe Dyph3::Differ do
       expect(result).to eq (expected_result)
     end
 
-    it 'should hanlde periodic conflicts' do
+    it 'should handle periodic conflicts' do
       base   += "woohoo!\n"
       ours    = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats about IT now\nthis is the last line\nWOOHOO!\n"
       theirs  = "this is some text\nanother LINE of text\none more good line\nthats ABOUT it now\nthis is the last line\nwooHOO!\n"
@@ -198,32 +198,32 @@ describe Dyph3::Differ do
 
     context "both sides deleting, but one side deleting more" do
       it "partial deletion of the first half of a line" do
-        base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-        ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-        theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+        base            = "this is some text\nanother line of text"
+        ours            = "another line of text"
+        theirs          = "some text\nanother line of text"
 
-        expected_result = ["this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n",
+        expected_result = ["this is some text\nanother line of text",
           true,
           [{:type=>:conflict, :ours=>"\n", :base=>"this is some text\n", :theirs=>"some text\n"},
-          {:type=>:non_conflict, :text=>"another line of text\none more good line\nthats about it now\nthis is the last line\n"}]
+          {:type=>:non_conflict, :text=>"another line of text"}]
         ]
         result = Dyph3::Differ.merge_text(ours, base, theirs)
         expect(result).to eq(expected_result)
       end
 
-      it "partial deletion of the second half of a line" do
-        base            = "thats about it now\nthis is the last line\nthis is some text\nanother line of text\none more good line\n"
-        ours            = "thats about it now\nthis is the last line\nanother line of text\none more good line\n"
-        theirs          = "thats about it now\nthis is the last line\nthis is\nanother line of text\none more good line\n"
-     #   expected_string = "thats about it now\nthis is the last line\nanother line of text\none more good line\n"
-        expected_result = ["thats about it now\nthis is the last line\nthis is some text\nanother line of text\none more good line\n",
+      it "partial deletion of a middle line" do
+        base            = "this is the first line\nthis is some text\nanother line of text"
+        ours            = "this is the first line\nanother line of text"
+        theirs          = "this is the first line\nthis is\nanother line of text"
+     #   expected_string = "this is the first line\nanother line of text"
+        expected_result = ["this is the first line\nthis is some text\nanother line of text",
           true,
-          [{:type=>:non_conflict, :text=>"thats about it now\nthis is the last line\n"},
+          [{:type=>:non_conflict, :text=>"this is the first line\n"},
            {:type=>:conflict,
             :ours=>"\n",
             :base=>"this is some text\n",
             :theirs=>"this is\n"},
-           {:type=>:non_conflict, :text=>"another line of text\none more good line\n"}]]
+           {:type=>:non_conflict, :text=>"another line of text"}]]
         result = Dyph3::Differ.merge_text(ours, base, theirs)
         expect(result).to eq(expected_result)
       end
