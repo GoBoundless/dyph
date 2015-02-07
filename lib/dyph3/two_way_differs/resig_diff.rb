@@ -6,9 +6,11 @@ module Dyph3
 
         old_text, new_text = [old_text_array, new_text_array].map(&:dup)
 
-        new_hash = create_diffing_hash(new_text)
         old_hash = create_diffing_hash(old_text)
+        new_hash = create_diffing_hash(new_text)
+
         find_single_matches(new_hash, old_hash, old_text, new_text)
+
         find_multi_matches(new_text, old_text, caller: :ascending)
         find_multi_matches(new_text, old_text, caller: :descending)
 
@@ -16,6 +18,7 @@ module Dyph3
       end
 
       private
+
         def self.create_diffing_hash(values)
           hash = {}
           values.each_with_index do |value, i|
@@ -40,9 +43,8 @@ module Dyph3
           offset = get_offset(caller: caller)
           set_range(new_text, old_text, caller: caller).each do |i|
             if is_local_dup?(new_text, old_text, i, offset: offset, caller: caller)
-              binding.pry
               new_text_row = new_text[i].row + offset
-              new_text[i + offset]          = TextNode.new(text: new_text[i + offset], row: new_text_row)
+              new_text[i + offset]   = TextNode.new(text: new_text[i + offset], row: new_text_row)
               old_text[new_text_row] = TextNode.new(text: old_text[new_text_row], row: i + offset)
             end
           end
