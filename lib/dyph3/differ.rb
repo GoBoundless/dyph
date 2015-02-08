@@ -196,7 +196,7 @@ module Dyph3
         end
 
         final_text = accumulate_lines(ia, text_a.length + 1, text_a)
-        
+
         res << {type: :non_conflict, text: final_text} unless final_text == "\n"
         res
       end
@@ -206,7 +206,8 @@ module Dyph3
         if chunk_desc[0] == '0'
           # 0 flag means choose left.  put lines chunk_desc[1] .. chunk_desc[2] into the resulting body.
           temp_text = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
-          res << {type: :non_conflict, text: temp_text}
+          # they deleted it, don't use if its only a new line
+          res << {type: :non_conflict, text: temp_text} unless temp_text == "\n"
         elsif chunk_desc[0] != 'A'
           # A flag means choose right.  put lines chunk_desc[3] to chunk_desc[4] into the resulting body.
           temp_text = accumulate_lines(chunk_desc[3], chunk_desc[4], text3[1])
