@@ -62,7 +62,8 @@ module Dyph3
       }
       result_diff3 = []
       chunk_desc = [nil,  0, 0,  0, 0,  0, 0]
-      # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB) 
+      # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB)
+
       while d2[:your].length > 0 || d2[:their].length > 0
         # find a continual range in origtext lo2...hi2
         # changed by left or by right.
@@ -77,27 +78,30 @@ module Dyph3
         }
 
         i_target, j_target, k_target = set_targets(d2)
-        # simultaneously consider all conflicts that overlap within a region. So, attempt to resolve
-        # a single conflict from 'your' or 'their', but then must also consider all overlapping conflicts from the other set.
+        # simultaneously consider all changes that overlap within a region. So, attempt to resolve
+        # a single conflict from 'your' or 'their', but then must also consider all overlapping changes from the other set.
         hi = d2[j_target][0][2] #sets the limit as to the max line this conflict will consider
-        r2[j_target] << d2[j_target].shift #set r2[j_target] to be the diff from j_target we are considering 
-        while d2[k_target].length > 0 && (d2[k_target][0][1] <= hi + 1) #if there are still conflicts in k_target and lo_k <= hi_j +1
+
+        r2[j_target] << d2[j_target].shift #set r2[j_target] to be the diff from j_target we are considering
+        while d2[k_target].length > 0 && (d2[k_target][0][1] <= hi + 1) #if there are still changes in k_target and lo_k <= hi_j +1
+
           hi_k = d2[k_target][0][2]
-          r2[k_target] << d2[k_target].shift # continue to put all overlapping conflicts with k_target onto r2[k_target]
+          r2[k_target] << d2[k_target].shift # continue to put all overlapping changes with k_target onto r2[k_target]
           if hi < hi_k
-            hi = hi_k #if the last conflict goes too high, switch the target. 
+            hi = hi_k #if the last conflict goes too high, switch the target.
 
             j_target = k_target
             k_target = invert_target(k_target)
           end
         end
+        
+        
         lo2 = r2[i_target][ 0][1]
         hi2 = r2[j_target][-1][2]
 
         your_lo, your_hi, their_lo, their_hi = determine_ranges(r2, chunk_desc, lo2, hi2)
 
         conflict_type = determine_conflict_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
-
         result_diff3 << [conflict_type,  your_lo, your_hi,  their_lo, their_hi,  lo2, hi2]
       end
 
@@ -123,9 +127,7 @@ module Dyph3
 
         initial_text = initial_text.join("\n") + "\n"
         res << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
-
         res = interpret_chunk(res, chunk_desc, text3)
-
         #assign i2 to be the line in origtext after the conflict
         i2 = chunk_desc[6] + 1
       end
@@ -248,7 +250,6 @@ module Dyph3
           their_lo = r2[:their][ 0][3] - r2[:their][ 0][1] + lo2
           their_hi = r2[:their][-1][4] - r2[:their][-1][2] + hi2
         else
-
           their_lo = chunk_desc[4] - chunk_desc[6] + lo2
           their_hi = chunk_desc[4] - chunk_desc[6] + hi2
         end
@@ -328,6 +329,7 @@ module Dyph3
           lines << text[lineno - 1]
         end
         lines = lines.join("\n")
+        
         lines += "\n" unless hi == text.length
         lines
       end

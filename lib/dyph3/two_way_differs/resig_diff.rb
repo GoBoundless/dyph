@@ -10,7 +10,6 @@ module Dyph3
         new_hash = create_diffing_hash(new_text)
 
         find_single_matches(new_hash, old_hash, old_text, new_text)
-
         find_multi_matches(new_text, old_text, caller: :ascending)
         find_multi_matches(new_text, old_text, caller: :descending)
 
@@ -42,7 +41,7 @@ module Dyph3
         def self.find_multi_matches(new_text, old_text, caller:)
           offset = get_offset(caller: caller)
           set_range(new_text, old_text, caller: caller).each do |i|
-            if is_local_dup?(new_text, old_text, i, offset: offset, caller: caller)
+            if is_unchanged?(new_text, old_text, i, offset: offset, caller: caller)
               new_text_row = new_text[i].row + offset
               new_text[i + offset]   = TextNode.new(text: new_text[i + offset], row: new_text_row)
               old_text[new_text_row] = TextNode.new(text: old_text[new_text_row], row: i + offset)
@@ -66,20 +65,20 @@ module Dyph3
           elsif caller == :descending
             (new_text.length - 1).downto(0)
           else
-            raise "Bad caller"
+            raise "bad caller"
           end
         end
 
 
-       def self.is_local_dup?(new_text, old_text, i, offset:, caller:)
-          optional(new_text[i]).text.value &&
-          !(optional(new_text[i + offset]).text.value) &&
-          range_check(new_text, old_text, i, caller: caller) &&
-          !(optional(old_text[new_text[i].row + offset]).text.value) &&
-          new_text[i + offset] == old_text[new_text[i].row + offset ]
+       def self.is_unchanged?(new_text, old_text, i, offset:, caller:)
+          optional(new_text[i]).text.value &&                           # current value is marked as shared
+          !(optional(new_text[i + offset]).text.value) &&               # value + offset is not marked as shared
+          boundry_check(new_text, old_text, i, caller: caller) &&       # not off the end of the array
+          !(optional(old_text[new_text[i].row + offset]).text.value) && # the old text not marked shared
+          new_text[i + offset] == old_text[new_text[i].row + offset ]   # and the value in question matches
         end
 
-        def self.range_check(new_text, old_text, i, caller:)
+        def self.boundry_check(new_text, old_text, i, caller:)
           if caller == :ascending
             new_text[i].row + 1 < old_text.length
           elsif caller == :descending

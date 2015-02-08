@@ -236,8 +236,8 @@ diff = _diff_heckel # default two-way diff function used by diff3()
 
 
 if __name__ == "__main__":
-    base            = "this is some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
-    ours            = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
-    theirs          = "some text\nanother line of text\none more good line\nthats about it now\nthis is the last line\n"
+    base            = "No\nTV\nand\nno\nbeer\nmake\nHomer\ngo\ncrazy"
+    ours            = "No\nwork\nand\nmuch\nbeer\nmake\nHomer\ncrazy\nand\nnaked"
+    theirs          = "No\nTV\nand\nwearing\nclothes\nmake\nHomer\ngo\ncrazy"
     expected_string = "another line of text\none more good line\nthats about it now\nthis is the last line\n"
     print merge(ours.split("\n"), base.split("\n"), theirs.split("\n"))
