@@ -35,14 +35,5 @@ describe Dyph3::TwoWayDiffers::HeckelDiff do
           end
       end
     end
-
-    describe "complex changes" do
-      it "should find a change" do 
-        expect(differ.diff("No TV and no beer make and Homer go crazy".split, "No work and much beer make Homer crazy and naked".split)).to eq [['a', 1, 0, 1, 1],['a', 2, 1, 3, 3]]
-      end
-      it "should find a add in left"      do expect(differ.diff([], ['z'])).to eq [['a', 1, 0, 1, 1]] end
-      it "should find a delete in right"  do expect(differ.diff(['z'], [])).to eq [['d', 1, 1, 1, 0]] end
-      it "should find a delete in right"  do expect(differ.diff(['a', 'z'], ['a', 'a'])).to eq [['d', 1, 1, 1, 0]] end
-    end
   end
 end
