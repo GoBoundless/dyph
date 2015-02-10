@@ -9,19 +9,19 @@ module Dyph3
       def self.diff(text_a, text_b)
         d = []
         #start building up uniq, the set of lines which appear exactly once in each text
-        uniq = create_diffing_hash(text_a, text_b)
+        uniq = find_matching_text(text_a, text_b)
         a1, b1 = [0, 0]
         # start with a1, b1 being the lines before the first change.
         # for each pair of lines in uniq which definitely match eachother:
         uniq.each do |a_uniq, b_uniq|
+          # walk a1 and b1 to next change spot
           a1, b1 = inc_indexes(text_a, text_b, a1, b1)
+
           # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a change (since we walked a1 and b1 to changes before this section, and at the end of each block)
           # a1 and b1 are always the lines right before the next change.
-
           next if a_uniq < a1 || b_uniq < b1
-          # a0, b0 are the last agreeing lines before a change.
-          a0, b0 = [a1, b1]
 
+          a0, b0 = [a1, b1]
           # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
           a1, b1 = [a_uniq - 1, b_uniq - 1]
 
@@ -29,30 +29,38 @@ module Dyph3
           a1, b1 = dec_indexes(text_a, text_b, a0, b0, a1, b1)
           action = assign_action(a0, b0, a1, b1)
           d << action if action
+
           #set a1 and b1 to be the words after the matching uniq word
           a1, b1 = [a_uniq + 1, b_uniq + 1]
-          # walk a1 and b1 to next change spot
-
         end
         d
       end
 
       private
-        def self.create_diffing_hash(text_a, text_b)
+        def set_flag(freq, line)
+          if freq[line].nil?
+            freq[line] = :in_one
+          elsif freq[line] == :in_one
+            freq[line] = :in_two
+          else
+            freq[line] = :in_many
+          end
+        end
+
+        def self.set_frequencies(freq, p, text, flag)
+          text.each_with_index do |line, i|
+            freq[line] ||= 0
+            freq[line] += flag                # add 2 to the freq of line if its in text_a
+            p[line] = i                    # set ap[line] to the line number
+          end
+        end
+
+        def self.find_matching_text(text_a, text_b)
           uniq = [[text_a.length, text_b.length]]
           freq, ap, bp = [{}, {}, {}]
 
-          text_a.each_with_index do |line, i|
-            freq[line] ||= 0
-            freq[line] += 2                   # add 2 to the freq of line if its in text_a
-            ap  [line] = i                    # set ap[line] to the line number
-          end
-
-          text_b.each_with_index do |line, i|
-            freq[line] ||= 0
-            freq[line] += 3                   # add 3 to the freq of line if its in text_b
-            bp  [line] = i                    # set bp[line] to the line number
-          end
+          set_frequencies(freq, ap, text_a, 2)
+          set_frequencies(freq, bp, text_b, 3)
 
           freq.each do |line, x|
             if x == 5
@@ -93,10 +101,9 @@ module Dyph3
           elsif b0 <= b1
             [:add, a0 + 1, a0, b0 + 1, b1 + 1]
           else
-            false
+            nil
           end
         end
-
     end
   end
 end
