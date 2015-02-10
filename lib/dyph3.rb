@@ -1,5 +1,9 @@
 require "dyph3/version"
 require "dyph3/differ"
+require "dyph3/diff3"
+require "dyph3/collater"
+require "dyph3/merger"
+require "dyph3/sanity_check"
 require "dyph3/two_way_differs/heckel_diff"
 require "dyph3/two_way_differs/resig_diff"
 require 'monads/optional'
