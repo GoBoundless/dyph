@@ -13,16 +13,16 @@ module Dyph3
         d = []
 
         uniq.each do |a_uniq, b_uniq|
-          low_a, low_b = move_to_next_difference(text_a, text_b, a1, b1)
+          lo_a, lo_b = move_to_next_difference(text_a, text_b, a1, b1)
           a1, b1 = [a_uniq + 1, b_uniq + 1]
 
           # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a change (since we walked a1 and b1 to changes before this section, and at the end of each block)
           # a1 and b1 are always the lines right before the next change.
-          next if a_uniq < low_a || b_uniq < low_b
+          next if a_uniq < lo_a || b_uniq < lo_b
 
           # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
-          hight_a, hight_b = move_to_prev_difference(text_a, text_b, low_a, low_b, a_uniq - 1, b_uniq - 1)
-          d << assign_action(low_a, low_b, hight_a, hight_b)
+          hi_a, hi_b = move_to_prev_difference(text_a, text_b, lo_a, lo_b, a_uniq - 1, b_uniq - 1)
+          d << assign_action(lo_a, lo_b, hi_a, hi_b)
         end
 
         d.compact
