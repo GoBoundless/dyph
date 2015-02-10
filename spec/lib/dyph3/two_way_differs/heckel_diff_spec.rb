@@ -20,10 +20,10 @@ describe Dyph3::TwoWayDiffers::HeckelDiff do
           .map  { |i| make_diff_array.call(i) }
           .each do |changed_array|
             after_z_pos = changed_array.index('z') + 1
-            expect(differ.diff(changed_array, array)).to eq [['c', after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
+            expect(differ.diff(changed_array, array)).to eq [[:change, after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
           end
       end
-      
+
       it "covers one change in the right, incrementing the change index" do
         array = Array.new(iterations, 'a')
         make_diff_array = lambda { |i| array.slice(0,i) + ['z'] + array.slice(i+1, array.length-1) }
@@ -31,9 +31,10 @@ describe Dyph3::TwoWayDiffers::HeckelDiff do
           .map  { |i| make_diff_array.call(i) }
           .each do |changed_array|
             after_z_pos = changed_array.index('z') + 1
-            expect(differ.diff(array, changed_array)).to eq [['c', after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
+            expect(differ.diff(array, changed_array)).to eq [[:change, after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
           end
       end
     end
+
   end
 end

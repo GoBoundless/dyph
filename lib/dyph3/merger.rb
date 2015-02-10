@@ -56,7 +56,7 @@ module Dyph3
 
         d = current_differ.diff(text_a, text_b)
 
-        if (_assoc_range(d, 'c') || _assoc_range(d, 'd')) && chunk_desc[base_lo] <= chunk_desc[base_hi]
+        if (_assoc_range(d, :change) || _assoc_range(d, :delete)) && chunk_desc[base_lo] <= chunk_desc[base_hi]
           conflict = {type: :conflict}
           conflict[:ours]   = accumulate_lines(chunk_desc[left_lo], chunk_desc[left_hi], text3[left])
           conflict[:base]   = accumulate_lines(chunk_desc[base_lo], chunk_desc[base_hi], text3[base])
@@ -75,11 +75,11 @@ module Dyph3
 
           conflict = {}
 
-          if r2[0] == 'c'
+          if r2[0] == :change
             conflict[:type] =  :conflict
             conflict[:ours] = accumulate_lines(r2[3], r2[4], text_b)
             conflict[:theirs] = accumulate_lines(r2[1], r2[2], text_a)
-          elsif r2[0] == 'a'
+          elsif r2[0] == :add
             conflict[:type] = :non_conflict
             conflict[:text] = accumulate_lines(r2[3], r2[4], text_b)
           end
