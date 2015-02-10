@@ -7,45 +7,28 @@ module Dyph3
       # @returns Array of arrays [cmd, our_lo, our_hi, their_lo, their_hi]
 
       def self.diff(text_a, text_b)
-        d = []
-        #start building up uniq, the set of lines which appear exactly once in each text
-        uniq = find_matching_text(text_a, text_b)
-        a1, b1 = [0, 0]
+        uniq = find_uniq_matches(text_a, text_b)
         # start with a1, b1 being the lines before the first change.
         # for each pair of lines in uniq which definitely match eachother:
+        a1, b1 = [0, 0]
+        d = []
         uniq.each do |a_uniq, b_uniq|
-          # walk a1 and b1 to next change spot
-          a1, b1 = inc_indexes(text_a, text_b, a1, b1)
-
+          start_a, start_b = move_to_next_difference(text_a, text_b, a1, b1)
           # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a change (since we walked a1 and b1 to changes before this section, and at the end of each block)
           # a1 and b1 are always the lines right before the next change.
-          next if a_uniq < a1 || b_uniq < b1
 
-          a0, b0 = [a1, b1]
-          # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
-          a1, b1 = [a_uniq - 1, b_uniq - 1]
-
-          # loop from a1 and b1's new positions down towards a0, b0.  stop when there is a change.  This gives the bounds of the change as [a0,a1] and [b0, b1]
-          a1, b1 = dec_indexes(text_a, text_b, a0, b0, a1, b1)
-          action = assign_action(a0, b0, a1, b1)
-          d << action if action
-
-          #set a1 and b1 to be the words after the matching uniq word
+          next if a_uniq < start_a || b_uniq < start_b
           a1, b1 = [a_uniq + 1, b_uniq + 1]
+          # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
+          end_a, end_b = move_to_prev_difference(text_a, text_b, start_a, start_b, a_uniq - 1, b_uniq - 1)
+          d << assign_action(start_a, start_b, end_a, end_b)
+
         end
-        d
+
+        d.compact
       end
 
       private
-        def set_flag(freq, line)
-          if freq[line].nil?
-            freq[line] = :in_one
-          elsif freq[line] == :in_one
-            freq[line] = :in_two
-          else
-            freq[line] = :in_many
-          end
-        end
 
         def self.set_frequencies(freq, p, text, flag)
           text.each_with_index do |line, i|
@@ -55,7 +38,7 @@ module Dyph3
           end
         end
 
-        def self.find_matching_text(text_a, text_b)
+        def self.find_uniq_matches(text_a, text_b)
           uniq = [[text_a.length, text_b.length]]
           freq, ap, bp = [{}, {}, {}]
 
@@ -71,8 +54,9 @@ module Dyph3
           uniq
         end
 
-        def self.inc_indexes(text_a, text_b, a1, b1)
-          # set a1 and b1 to be the first line where there is a change.
+        def self.move_to_next_difference(text_a, text_b, a1, b1)
+          # walk a1 and b1 to next change spot
+          # and set a1 and b1 to be the first line where there is a change.
           while a1 < text_a.length && b1 < text_b.length
             if text_a[a1] != text_b[b1]
               break
@@ -83,8 +67,8 @@ module Dyph3
 
           [a1, b1]
         end
-
-        def self.dec_indexes(text_a, text_b, a0, b0, a1, b1)
+        def self.move_to_prev_difference(text_a, text_b, a0, b0, a1, b1)
+          # loop from a1 and b1's new positions down towards a0, b0.  stop when there is a change.  This gives the bounds of the change as [a0,a1] and [b0, b1]
           while a0 <= a1 && b0 <= b1
             break if text_a[a1] != text_b[b1]   # a change is found on lines a1 and b1.  break out of loop.
             a1 -= 1
