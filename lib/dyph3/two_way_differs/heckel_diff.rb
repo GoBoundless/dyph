@@ -5,31 +5,30 @@ module Dyph3
       # @param [in] text_a Array of lines of first text.
       # @param [in] text_b Array of lines of second text.
       # @returns Array of arrays [cmd, our_lo, our_hi, their_lo, their_hi]
-
       def self.diff(text_a, text_b)
         uniq = find_uniq_matches(text_a, text_b)
         # start with a1, b1 being the lines before the first change.
         # for each pair of lines in uniq which definitely match eachother:
         a1, b1 = [0, 0]
         d = []
+
         uniq.each do |a_uniq, b_uniq|
-          start_a, start_b = move_to_next_difference(text_a, text_b, a1, b1)
+          low_a, low_b = move_to_next_difference(text_a, text_b, a1, b1)
+          a1, b1 = [a_uniq + 1, b_uniq + 1]
+
           # (a_uniq < a1 || b_uniq < b1) == true guarentees there is not a change (since we walked a1 and b1 to changes before this section, and at the end of each block)
           # a1 and b1 are always the lines right before the next change.
+          next if a_uniq < low_a || b_uniq < low_b
 
-          next if a_uniq < start_a || b_uniq < start_b
-          a1, b1 = [a_uniq + 1, b_uniq + 1]
           # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
-          end_a, end_b = move_to_prev_difference(text_a, text_b, start_a, start_b, a_uniq - 1, b_uniq - 1)
-          d << assign_action(start_a, start_b, end_a, end_b)
-
+          hight_a, hight_b = move_to_prev_difference(text_a, text_b, low_a, low_b, a_uniq - 1, b_uniq - 1)
+          d << assign_action(low_a, low_b, hight_a, hight_b)
         end
 
         d.compact
       end
 
       private
-
         def self.set_frequencies(freq, p, text, flag)
           text.each_with_index do |line, i|
             freq[line] ||= 0
@@ -67,6 +66,7 @@ module Dyph3
 
           [a1, b1]
         end
+
         def self.move_to_prev_difference(text_a, text_b, a0, b0, a1, b1)
           # loop from a1 and b1's new positions down towards a0, b0.  stop when there is a change.  This gives the bounds of the change as [a0,a1] and [b0, b1]
           while a0 <= a1 && b0 <= b1
@@ -84,8 +84,6 @@ module Dyph3
             [:delete, a0 + 1, a1 + 1, b0 + 1, b0]
           elsif b0 <= b1
             [:add, a0 + 1, a0, b0 + 1, b1 + 1]
-          else
-            nil
           end
         end
     end
