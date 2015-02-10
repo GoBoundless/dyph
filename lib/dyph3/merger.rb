@@ -1,9 +1,5 @@
 module Dyph3
   class Merger
-    def self.left;  0; end
-    def self.right; 1; end
-    def self.base;  2; end
-
     def self.merge(left, origtext, right)
       res = []
       d3 = Diff3.execute_diff(left, origtext, right, current_differ)
