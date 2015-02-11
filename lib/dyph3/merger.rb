@@ -7,9 +7,6 @@ module Dyph3
       i2 = 1
       d3.each do |raw_chunk_desc|
         chunk_desc = ChunkDesc.new(raw_chunk_desc)
-        #chunk_desc[5] is the line that this new conflict starts
-        #put base text from lines i2 ... chunk_desc[5] into the resulting body.
-        #initial_text = accumulate_lines(i2, chunk_desc[5] + 1, text3[2])
         initial_text = []
 
         (i2 ... chunk_desc.base_lo).each do |lineno|                  # exclusive (...)
