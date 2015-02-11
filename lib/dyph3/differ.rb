@@ -5,11 +5,11 @@ module Dyph3
       valid_arguments = [left, base, right].inject(true){ |memo, arg| memo && arg.is_a?(String) }
       raise ArgumentError, "Argument is not a string." unless valid_arguments
 
-      merge_result = Dyph3::Merger.merge(left.split("\n"), base.split("\n"), right.split("\n"))
-      return_value = Dyph3::Collater.collate_merge(left, base, right, merge_result)
+      merge_result = Dyph3::Support::Merger.merge(left.split("\n"), base.split("\n"), right.split("\n"))
+      return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
 
       # sanity check: make sure anything new in left or right made it through the merge
-      Dyph3::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
+      Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
       return_value
     end
   end
