@@ -31,21 +31,25 @@ module Dyph3
       private
         def self.set_frequencies(freq, p, text, flag)
           text.each_with_index do |line, i|
-            freq[line] ||= 0
-            freq[line] += flag                # add 2 to the freq of line if its in text_a
-            p[line] = i                    # set ap[line] to the line number
+            freq[line] ||= {}
+            freq[line][flag] ||= 0
+            freq[line][flag] += 1
+            p[line] = i
           end
         end
 
         def self.find_uniq_matches(text_a, text_b)
           uniq = [[text_a.length, text_b.length]]
           freq, ap, bp = [{}, {}, {}]
-
-          set_frequencies(freq, ap, text_a, 2)
-          set_frequencies(freq, bp, text_b, 3)
+          
+          #this set_frequencies assigns and increments a flag
+          #that indicates if the text is unique
+          # 5 (2 + 3) means it is in each exactly once
+          set_frequencies(freq, ap, text_a, :a_count)
+          set_frequencies(freq, bp, text_b, :b_count)
 
           freq.each do |line, x|
-            if x == 5
+            if x[:a_count] == 1 && x[:b_count] == 1
               uniq << [ap[line], bp[line]]    # if the line was uniqely in both, push [line index in a, line index in b])
             end
           end

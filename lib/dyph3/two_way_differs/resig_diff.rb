@@ -9,9 +9,10 @@ module Dyph3
         old_text, new_text = [old_text_array, new_text_array].map(&:dup)
 
         old_hash = create_diffing_hash(old_text)
-        new_hash = create_diffing_hash(new_text)
 
+        new_hash = create_diffing_hash(new_text)
         find_single_matches(new_hash, old_hash, old_text, new_text)
+
         find_multi_matches(new_text, old_text, caller: :ascending)
         find_multi_matches(new_text, old_text, caller: :descending)
 
@@ -73,10 +74,10 @@ module Dyph3
 
 
        def is_unchanged?(new_text, old_text, i, offset:, caller:)
-          optional(new_text[i]).text.value &&                           # current value is marked as shared
-          !(optional(new_text[i + offset]).text.value) &&               # value + offset is not marked as shared
+          optional(new_text[i]).text.value &&                           # current value is marked as uniq
           boundry_check(new_text, old_text, i, caller: caller) &&       # not off the end of the array
-          !(optional(old_text[new_text[i].row + offset]).text.value) && # the old text not marked shared
+          !(optional(new_text[i + offset]).text.value) &&               # value + offset is not marked as unique
+          !(optional(old_text[new_text[i].row + offset]).text.value) && # the old text not marked unique
           new_text[i + offset] == old_text[new_text[i].row + offset ]   # and the value in question matches
         end
 

@@ -2,35 +2,40 @@ module Dyph3
   module Support
     class Diff3
       # Three-way diff based on the GNU diff3.c by R. Smith.
-      #   @param [in] left    Array of lines of your text.
+      #   @param [in] left    Array of lines of left text.
       #   @param [in] origtext    Array of lines of base text.
-      #   @param [in] right   Array of lines of their text.
+      #   @param [in] right   Array of lines of right text.
       #   @returns Array of tuples containing diff results. The tuples consist of
       #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
       #        :choose_left, :choose_right, :no_conflict_found, or :possible_conflict.
       def self.execute_diff(left, origtext, right, current_differ)
         # diff result => [(cmd, loA, hiA, loB, hiB), ..]
         d2 = {
-          your: current_differ.diff(origtext, left), # queue of conflicts with your
-          their: current_differ.diff(origtext, right) # queue of conflicts with their
+          left: current_differ.diff(origtext, left), # queue of conflicts with left
+          right: current_differ.diff(origtext, right) # queue of conflicts with right
         }
 
         result_diff3 = []
 
         # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB)
-        while d2[:your].length > 0 || d2[:their].length > 0
+        
 
-          #warning: this murates r2 d2
-          r2 = { your: [], their: [] }
+
+        while d2[:left].length > 0 || d2[:right].length > 0
+
+
+          r2 = { left: [], right: [] }
+          #warning: this mutates r2 d2
 
           base_lo, base_hi = determine_continual_change_range_in_base(r2, d2)
 
-          your_lo, your_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :your)
-          their_lo, their_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :their)
+          left_lo, left_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :left)
+          right_lo, right_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :right)
 
-          change_type = determine_change_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
 
-          result_diff3 << [change_type, your_lo, your_hi, their_lo, their_hi, base_lo, base_hi]
+          change_type = determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
+
+          result_diff3 << [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
         end
 
         result_diff3
@@ -40,7 +45,7 @@ module Dyph3
         def self.determine_continual_change_range_in_base(r2, d2)
           i_target, j_target, k_target = set_targets(d2)
           # simultaneously consider all changes that overlap within a region. So, attempt to resolve
-          # a single conflict from 'your' or 'their', but then must also consider all overlapping changes from the other set.
+          # a single conflict from 'left' or 'right', but then must also consider all overlapping changes from the other set.
           hi = d2[j_target][0][2] #sets the limit as to the max line this conflict will consider
 
           r2[j_target] << d2[j_target].shift #set r2[j_target] to be the diff from j_target we are considering
@@ -61,17 +66,18 @@ module Dyph3
           [lo2, hi2]
         end
 
-        def self.determine_change_type(r2, left, right, your_lo, your_hi, their_lo, their_hi)
-          if r2[:your].empty?
+        def self.determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
+          if r2[:left].empty?
             cmd = :choose_right
-          elsif r2[:their].empty?
+          elsif r2[:right].empty?
             cmd = :choose_left
-          elsif your_hi - your_lo != their_hi - their_lo
+          elsif left_hi - left_lo != right_hi - right_lo
             cmd = :possible_conflict
           else
+
             cmd = :no_conflict_found
-            (0 .. your_hi - your_lo).each do |d|
-              (i0, i1) = [your_lo + d - 1, their_lo + d - 1]
+            (0 .. left_hi - left_lo).each do |d|
+              (i0, i1) = [left_lo + d - 1, right_lo + d - 1]
               ok0 = (0 <= i0 && i0 < left.length)
               ok1 = (0 <= i1 && i1 < right.length)
 
@@ -85,19 +91,19 @@ module Dyph3
         end
 
         def self.set_targets(d2)
-          #run out of conflicts in :your queue
-          if d2[:your].empty?
-            i_target = :their
+          #run out of conflicts in :left queue
+          if d2[:left].empty?
+            i_target = :right
           else
-            #run out of conflicts in :their queue
-            if d2[:their].empty?
-              i_target = :your
+            #run out of conflicts in :right queue
+            if d2[:right].empty?
+              i_target = :left
             else
               #there are conflicts in both queues. let the target be the earlier one.
-              if d2[:your][0][1] <= d2[:their][0][1]
-                i_target = :your
+              if d2[:left][0][1] <= d2[:right][0][1]
+                i_target = :left
               else
-                i_target = :their
+                i_target = :right
               end
             end
           end
@@ -109,15 +115,15 @@ module Dyph3
         end
 
         def self.invert_target(target)
-          if target == :your
-            :their
+          if target == :left
+            :right
           else
-            :your
+            :left
           end
         end
 
         def self.get_hi_lo_ranges(r2, base_lo, base_hi, whose:)
-          #r2: {:your=>[["c", 2, 2, 2, 2]], :their=>[["a", 3, 2, 3, 3]]}
+          #r2: {:left=>[["c", 2, 2, 2, 2]], :right=>[["a", 3, 2, 3, 3]]}
           #lo:  lo offset
           #hi: j_target's hi
           #whose: which target we are currently checking
