@@ -4,6 +4,13 @@ module Dyph3
       extend self
 
       def diff(old_text_array, new_text_array)
+        results = execute_diff(old_text_array, new_text_array)
+        converter = Dyph3::TwoWayDiffers::OutputConverter
+        merge_results = converter.merge_results(self, results[:old_text], results[:new_text])
+        converter.convert_to_dyph3_output(merge_results)
+      end
+
+      def execute_diff(old_text_array, new_text_array)
         raise ArgumentError, "Argument is not an array." unless  old_text_array.is_a?(Array) && new_text_array.is_a?(Array)
 
         old_text, new_text = [old_text_array, new_text_array].map(&:dup)
@@ -13,14 +20,24 @@ module Dyph3
         new_hash = create_diffing_hash(new_text)
         find_single_matches(new_hash, old_hash, old_text, new_text)
 
+        if !new_text.first.nil? && new_text[0] == old_text[0]
+          new_text[0] = TextNode.new(text: new_text[0], row: 0)
+          old_text[0] = TextNode.new(text: old_text[0], row: 0)
+        end
+
         find_multi_matches(new_text, old_text, caller: :ascending)
+
+        if !old_text.last.nil? && new_text.last == old_text.last
+          new_text[new_text.length-1] = TextNode.new(text: new_text.last, row: old_text.length-1)
+          old_text[old_text.length-1] = TextNode.new(text: old_text.last, row: new_text.length-1)
+        end
+
         find_multi_matches(new_text, old_text, caller: :descending)
 
-        { o: old_text, n: new_text}
+        { old_text: old_text, new_text: new_text}
       end
 
       private
-
         def create_diffing_hash(values)
           hash = {}
           values.each_with_index do |value, i|

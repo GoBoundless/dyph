@@ -22,7 +22,7 @@ module Dyph3
 
           # we know a_uniq to be the next line which has a corresponding b_uniq. so a1 = last line of potential change (as does b1)
           hi_a, hi_b = move_to_prev_difference(text_a, text_b, lo_a, lo_b, a_uniq - 1, b_uniq - 1)
-          d << assign_action(lo_a, lo_b, hi_a, hi_b)
+          d << Dyph3::Support::AssignAction.get_action(lo_a: lo_a, lo_b: lo_b, hi_a: hi_a, hi_b: hi_b)
         end
 
         d.compact
@@ -79,16 +79,6 @@ module Dyph3
             b1 -= 1
           end
           [a1, b1]
-        end
-
-        def self.assign_action(a0, b0, a1, b1)
-          if a0 <= a1 && b0 <= b1 # for this change, the bounds are both 'normal'.  the beginning of the change is before the end.
-            [:change, a0 + 1, a1 + 1, b0 + 1, b1 + 1]
-          elsif a0 <= a1
-            [:delete, a0 + 1, a1 + 1, b0 + 1, b0]
-          elsif b0 <= b1
-            [:add, a0 + 1, a0, b0 + 1, b1 + 1]
-          end
         end
     end
   end
