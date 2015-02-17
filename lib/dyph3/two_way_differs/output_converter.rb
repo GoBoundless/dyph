@@ -4,21 +4,9 @@ module Dyph3
       extend self
 
       def convert_to_dyph3_output(old_text, new_text)
-        merged_text = merge_results(old_text, new_text)
-        merge_output_lines = merged_text.map { |x| to_output_format x }
-        actions = partition_into_actions(merge_output_lines)
-
-        collapsed_actions = actions.map { |action| collapse_action(action) }
-        paired_results = pair_up_add_deletes collapsed_actions
-
-        no_changes = paired_results.reject { |x| x[:action] == :no_change}
-        read_to_go = set_offset(no_changes)
-        read_to_go.map { |r| Dyph3::Support::AssignAction.get_action(
-          lo_a: r[:old_lo]-1 ,
-          lo_b: r[:new_lo]-1,
-          hi_a: r[:old_hi]-1,
-          hi_b: r[:new_hi]-1
-        )}
+        actions =  merge_and_partition(old_text, new_text)
+        selected_actions = extract_add_deletes_changes(actions)
+        correct_offsets(selected_actions)
       end
 
       def merge_results(old_text, new_text)
@@ -34,6 +22,28 @@ module Dyph3
       end
 
       private
+        def merge_and_partition(old_text, new_text)
+          merged_text = merge_results(old_text, new_text)
+          merge_output_lines = merged_text.map { |x| to_output_format x }
+          partition_into_actions(merge_output_lines)
+        end
+
+        def extract_add_deletes_changes(actions)
+          collapsed_actions = actions.map { |action| collapse_action(action) }
+          paired_results = pair_up_add_deletes collapsed_actions
+          paired_results.reject { |res| res[:action] == :no_change}
+        end
+
+        def correct_offsets(selected_actions)
+          fix_offsets = set_offset(selected_actions)
+          fix_offsets.map { |r| Dyph3::Support::AssignAction.get_action(
+            lo_a: r[:old_lo]-1 ,
+            lo_b: r[:new_lo]-1,
+            hi_a: r[:old_hi]-1,
+            hi_b: r[:new_hi]-1
+          )}
+        end
+
         def gather_up_actions(old_text, new_text, merged_text)
           prev_no_change_old = - 1
           new_text.map.with_index.each do |line, i|
