@@ -6,7 +6,6 @@ module Dyph3
       def diff(old_text_array, new_text_array)
         results = execute_diff(old_text_array, new_text_array)
         converter = Dyph3::TwoWayDiffers::OutputConverter
-        #merge_results = converter.merge_results(results[:old_text], results[:new_text])
         converter.convert_to_dyph3_output(results[:old_text], results[:new_text])
       end
 
