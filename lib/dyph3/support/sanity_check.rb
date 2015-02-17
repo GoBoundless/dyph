@@ -1,7 +1,9 @@
 module Dyph3
   module Support
-    class SanityCheck
-      def self.ensure_no_lost_data(left, base, right, return_value)
+    module SanityCheck
+      extend self
+
+      def ensure_no_lost_data(left, base, right, return_value)
         final_result = return_value[2]
 
         result_word_map = {}
@@ -30,26 +32,27 @@ module Dyph3
         end
       end
 
-      def self.count_words(str, hash={})
-        str.split(/\s+/).reduce(hash) do |map, word|
-          map[word] ||= 0
-          map[word] += 1
-          map
+      private
+        def count_words(str, hash={})
+          str.split(/\s+/).reduce(hash) do |map, word|
+            map[word] ||= 0
+            map[word] += 1
+            map
+          end
         end
-      end
 
-      def self.subtract_words(left_map, right_map)
-        remaining_words = {}
-        
-        left_map.each do |word, count|
-          count_in_right = right_map[word] || 0
+        def subtract_words(left_map, right_map)
+          remaining_words = {}
           
-          new_count = count - count_in_right
-          remaining_words[word] = new_count if new_count > 0
+          left_map.each do |word, count|
+            count_in_right = right_map[word] || 0
+            
+            new_count = count - count_in_right
+            remaining_words[word] = new_count if new_count > 0
+          end
+          
+          remaining_words
         end
-        
-        remaining_words
-      end
     end
 
     class BadMergeException < StandardError

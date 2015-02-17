@@ -9,6 +9,8 @@ module Dyph3
           [:delete, lo_a + 1, hi_a + 1, lo_b + 1, lo_b]
         elsif lo_b <= hi_b
           [:add, lo_a + 1, lo_a, lo_b + 1, hi_b + 1]
+        else
+          nil
         end
       end
     end

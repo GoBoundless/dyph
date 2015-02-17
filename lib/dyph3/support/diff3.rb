@@ -1,6 +1,7 @@
 module Dyph3
   module Support
-    class Diff3
+    module Diff3
+      extend self
       # Three-way diff based on the GNU diff3.c by R. Smith.
       #   @param [in] left    Array of lines of left text.
       #   @param [in] origtext    Array of lines of base text.
@@ -8,7 +9,7 @@ module Dyph3
       #   @returns Array of tuples containing diff results. The tuples consist of
       #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
       #        :choose_left, :choose_right, :no_conflict_found, or :possible_conflict.
-      def self.execute_diff(left, origtext, right, current_differ)
+      def execute_diff(left, origtext, right, current_differ)
         # diff result => [(cmd, loA, hiA, loB, hiB), ..]
         d2 = {
           left: current_differ.diff(origtext, left), # queue of conflicts with left
@@ -42,7 +43,7 @@ module Dyph3
       end
 
       private
-        def self.determine_continual_change_range_in_base(r2, d2)
+        def determine_continual_change_range_in_base(r2, d2)
           i_target, j_target, k_target = set_targets(d2)
           # simultaneously consider all changes that overlap within a region. So, attempt to resolve
           # a single conflict from 'left' or 'right', but then must also consider all overlapping changes from the other set.
@@ -66,7 +67,7 @@ module Dyph3
           [lo2, hi2]
         end
 
-        def self.determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
+        def determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
           if r2[:left].empty?
             cmd = :choose_right
           elsif r2[:right].empty?
@@ -90,7 +91,7 @@ module Dyph3
           cmd
         end
 
-        def self.set_targets(d2)
+        def set_targets(d2)
           #run out of conflicts in :left queue
           if d2[:left].empty?
             i_target = :right
@@ -114,7 +115,7 @@ module Dyph3
           [i_target, j_target, k_target]
         end
 
-        def self.invert_target(target)
+        def invert_target(target)
           if target == :left
             :right
           else
@@ -122,7 +123,7 @@ module Dyph3
           end
         end
 
-        def self.get_hi_lo_ranges(r2, base_lo, base_hi, whose:)
+        def get_hi_lo_ranges(r2, base_lo, base_hi, whose:)
           #r2: {:left=>[["c", 2, 2, 2, 2]], :right=>[["a", 3, 2, 3, 3]]}
           #lo:  lo offset
           #hi: j_target's hi
