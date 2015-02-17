@@ -1,15 +1,40 @@
 require 'spec_helper'
 
 describe Dyph3::TwoWayDiffers::ResigDiff do
-  describe "" do
-    let(:differ) { Dyph3::TwoWayDiffers::ResigDiff }
-    describe "complex changes" do
-      xit "should find a change" do
-        t1 = "No TV and no beer make Homer go crazy".split
-        t2 = "No work and much beer make Homer crazy and naked".split
-        d1 = differ.diff(t1,t2)
-        expect(d1).to eq 'test'
+  let(:differ) { Dyph3::TwoWayDiffers::ResigDiff }
+  describe '.diff' do
+    let(:iterations) { 10 }
+    describe 'no change on an increasing array size, 0 to n - 1' do
+      it 'should find no change if right and left match' do
+        (0 .. iterations)
+          .map  { |i| Array.new(i, 'a') }
+          .each { |array| expect( differ.diff(array, array) ).to eq [] }
       end
     end
+
+    describe 'has changes' do
+      it "covers one change in the left, incrementing the change index" do
+        array = Array.new(iterations, 'a')
+        make_diff_array = lambda { |i| array.slice(0,i) + ['z'] + array.slice(i+1, array.length-1) }
+        (0 ... iterations)
+          .map  { |i| make_diff_array.call(i) }
+          .each do |changed_array|
+            after_z_pos = changed_array.index('z') + 1
+            expect(differ.diff(changed_array, array)).to eq [[:change, after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
+          end
+      end
+
+      it "covers one change in the right, incrementing the change index" do
+        array = Array.new(iterations, 'a')
+        make_diff_array = lambda { |i| array.slice(0,i) + ['z'] + array.slice(i+1, array.length-1) }
+        (0 ... iterations)
+          .map  { |i| make_diff_array.call(i) }
+          .each do |changed_array|
+            after_z_pos = changed_array.index('z') + 1
+            expect(differ.diff(array, changed_array)).to eq [[:change, after_z_pos, after_z_pos, after_z_pos, after_z_pos]]
+          end
+      end
+    end
+
   end
 end

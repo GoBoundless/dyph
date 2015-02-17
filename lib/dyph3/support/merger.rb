@@ -1,20 +1,15 @@
 module Dyph3
   module Support
     class Merger
-      attr_reader :result
-
-      def self.merge(left, origtext, right)
-        merger  = Merger.new(left: left, origtext: origtext, right: right)
+      attr_reader :result, :current_differ
+      def self.merge(left, origtext, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
+        merger  = Merger.new(left: left, origtext: origtext, right: right, current_differ: current_differ)
         merger.execute_merge
         merger.result
       end
 
-      def current_differ(current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
-        current_differ
-      end
-
       def execute_merge
-        d3 = Diff3.execute_diff(@text3.left, @text3.base, @text3.right, current_differ)
+        d3 = Diff3.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
         i2 = 1
         d3.each do |raw_chunk_desc|
           chunk_desc = ChunkDesc.new(raw_chunk_desc)
@@ -39,8 +34,9 @@ module Dyph3
 
       protected
 
-        def initialize(left:, origtext:, right:)
+        def initialize(left:, origtext:, right:, current_differ:)
           @result = []
+          @current_differ = current_differ
           @text3 = Text3.new(left: left, right: right, base: origtext)
         end
 
@@ -95,7 +91,7 @@ module Dyph3
           text_a = set_text(@text3.right, chunk_desc.right_lo,  chunk_desc.right_hi)
           text_b = set_text(@text3.left , chunk_desc.left_lo,   chunk_desc.left_hi)
 
-          d = current_differ.diff(text_a, text_b)
+          d = @current_differ.diff(text_a, text_b)
 
           if (_assoc_range(d, :change) || _assoc_range(d, :delete)) && chunk_desc.base_lo <= chunk_desc.base_hi
             set_conflict(chunk_desc)
