@@ -116,8 +116,9 @@ module Dyph3
         end
 
         def is_a_pair?(actions, i)
-          actions[i-1][:action] == :delete && actions[i] && actions[i][:action] == :add ||
-          actions[i-1][:action] == :add && actions[i] && actions[i][:action] == :delete
+          action_one =  actions[i-1][:action] if actions[i-1]
+          action_two =  actions[i][:action]   if actions[i]
+          Set.new([action_one, action_two]) == Set.new([:add, :delete])
         end
 
         def pair_up_add_deletes(actions)
