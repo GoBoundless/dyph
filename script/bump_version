@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -o nounset
+set -o errtrace
+set -o errexit
+set -o pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$DIR/.."
+
+
+usage() {
+  cat <<END
+Usage: $progname -v 0.0.0
+END
+  exit 1
+}
+
+write_version() {
+  cat >$VERSION_FILE <<EOL
+module Dyph3
+  VERSION = "$VERSION"
+end
+EOL
+}
+
+commit_version() {
+  git add $VERSION_FILE
+  git commit -m "Bump version to v$VERSION"
+  git push origin master
+}
+
+commit_tag() {
+  git tag "v$VERSION"
+  git push origin "v$VERSION"
+}
+
+build_gem() {
+  gem build dyph3.gemspec
+}
+
+push_gemfury() {
+  fury push "dyph3-$VERSION.gem" --as=boundless
+}
+
+run() {
+  cd $ROOT_DIR
+  write_version
+  commit_version
+  commit_tag
+  build_gem
+  push_gemfury
+}
+
+VERSION_FILE="$ROOT_DIR/lib/dyph3/version.rb"
+while getopts "v:f:" OPTION ; do
+  case $OPTION in
+    h)
+      usage
+      ;;
+    v)
+      VERSION="$OPTARG"
+      ;;
+    f)
+      VERSION_FILE="$OPTARG"
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+run
