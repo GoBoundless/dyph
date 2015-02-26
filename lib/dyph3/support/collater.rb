@@ -9,7 +9,6 @@ module Dyph3
           final_result = [{type: :non_conflict, text: []}]
           [[], conflict, final_result]
         else
-          #merge_result = handle_trailing_newline(left, base, right, merge_result)
           merge_result = merge_non_conflicts(merge_result)
           get_text_conflict_result(base, merge_result)
         end
@@ -43,37 +42,6 @@ module Dyph3
             end
           end
           res
-        end
-        # @param [in] ours        unsplit text of ours
-        # @param [in] base        unsplit text of base
-        # @param [in] theirs      unsplit text of theirs
-        # @returns the result with the possible trailing newlines added if necessary.
-        def handle_trailing_newline(ours, base, theirs, result)
-          last = result[-1]
-          if last[:type] == :non_conflict && last[:text] != "\n"
-            last[:text] += "\n" if add_trailing_newline?(ours, base, theirs)
-          elsif last[:type] == :conflict
-            last[:ours]   += "\n" if ours[-1]   == "\n"
-            last[:theirs] += "\n" if theirs[-1] == "\n"
-            last[:base]   += "\n" if base[-1]   == "\n"
-          end
-          result
-        end
-
-        # @param [in] ours        unsplit text of ours
-        # @param [in] base        unsplit text of base
-        # @param [in] theirs      unsplit text of theirs
-        # @returns if a trailing newline should be added.  It should be added if all texts had a trailing newline, 
-        #    or if one or both changes added a new line when there was not one before.
-        def add_trailing_newline?(ours, base, theirs)
-          our_newline = ours[-1] == "\n"
-          base_newline = base[-1] == "\n"
-          their_newline = theirs[-1] == "\n"
-
-          all_end_in_new_line = our_newline && base_newline && their_newline
-          someone_added_new_line = !base_newline && (our_newline || their_newline)
-
-          return  all_end_in_new_line || someone_added_new_line
         end
     end
   end

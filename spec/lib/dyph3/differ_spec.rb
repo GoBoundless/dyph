@@ -1,5 +1,5 @@
 require 'spec_helper'
-[Dyph3::TwoWayDiffers::HeckelDiff, Dyph3::TwoWayDiffers::ResigDiff].each do |current_differ|
+[Dyph3::TwoWayDiffers::ResigDiff].each do |current_differ|
 
   describe Dyph3::Differ do
     describe "test" do
@@ -205,7 +205,7 @@ require 'spec_helper'
 
           expected_result = ["this is some text\nanother line of text",
             true,
-            [{:type=>:conflict, :ours=>"\n", :base=>"this is some text\n", :theirs=>"some text\n"},
+            [{:type=>:conflict, :ours=>"", :base=>"this is some text\n", :theirs=>"some text\n"},
             {:type=>:non_conflict, :text=>"another line of text"}]
           ]
           result = Dyph3::Differ.merge_text(ours, base, theirs, current_differ: current_differ)
@@ -221,7 +221,7 @@ require 'spec_helper'
             true,
             [{:type=>:non_conflict, :text=>"this is the first line\n"},
              {:type=>:conflict,
-              :ours=>"\n",
+              :ours=>"",
               :base=>"this is some text\n",
               :theirs=>"this is\n"},
              {:type=>:non_conflict, :text=>"another line of text"}]]
@@ -290,7 +290,7 @@ require 'spec_helper'
           base,
           true,
         [ {type: :non_conflict, text: "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n"},
-          {type: :conflict, ours: "\n",
+          {type: :conflict, ours: "",
                             theirs: "<figref id=\"30836\"></figref>\n",
                             base: "\n\n"},
           {type: :non_conflict, text: "</p>\n"}]]
