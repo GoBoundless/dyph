@@ -9,15 +9,15 @@ module Dyph3
         result_word_map = {}
 
         final_result.each do |result_block|
-          block_text = case result_block[:type]
+          blocks = case result_block[:type]
             when :non_conflict then result_block[:text]
             when :conflict then [result_block[:ours], result_block[:theirs]].flatten
             else raise "Unknown block type, #{result_block[:type]}"
           end
-          count_words(block_text, result_word_map)
+          count_blocks(blocks, result_word_map)
         end
 
-        left_word_map, base_word_map, right_word_map = [left, base, right].map { |str| count_words(str) }
+        left_word_map, base_word_map, right_word_map = [left, base, right].map { |str| count_blocks(str) }
 
         # new words are words that are in left or right, but not in base
         new_left_words = subtract_words(left_word_map, base_word_map)
@@ -26,16 +26,17 @@ module Dyph3
         # now make sure all new words are somewhere in the result
         missing_new_left_words = subtract_words(new_left_words, result_word_map)
         missing_new_right_words = subtract_words(new_right_words, result_word_map)
+
         if missing_new_left_words.any? || missing_new_right_words.any?
           raise BadMergeException.new(return_value)
         end
       end
 
       private
-        def count_words(str, hash={})
-          str.reduce(hash) do |map, word|
-            map[word] ||= 0
-            map[word] += 1
+        def count_blocks(blocks, hash={})
+          blocks.reduce(hash) do |map, block|
+            map[block.inspect] ||= 0
+            map[block.inspect] += 1
             map
           end
         end

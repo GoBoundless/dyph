@@ -8,9 +8,7 @@ module Dyph3
 
       # sanity check: make sure anything new in left or right made it through the merge
       Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
-
-      return_value = join_results(return_value)
-      return_value
+      join_results(return_value, join_function: join_funtion )
     end
 
     def self.split_on_new_line
@@ -21,7 +19,7 @@ module Dyph3
       -> (array) { array.join }
     end
 
-    def self.join_results(old_results, join_function: standard_join)
+    def self.join_results(old_results, join_function:)
       new_results = []
       new_results[0] = join_function.call old_results[0]
       new_results[1] = old_results[1]
