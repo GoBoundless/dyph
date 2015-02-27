@@ -23,7 +23,7 @@ module Dyph3
 
     def self.join_results(old_results, join_function: standard_join)
       new_results = []
-      new_results[0] = standard_join.call old_results[0]
+      new_results[0] = join_function.call old_results[0]
       new_results[1] = old_results[1]
       new_results[2] = old_results[2].map do |hash|
         return_hash = {}
@@ -31,7 +31,7 @@ module Dyph3
           if key == :type
             return_hash[key] = hash[key]
           else
-            return_hash[key] = standard_join.call(hash[key])
+            return_hash[key] = join_function.call(hash[key])
           end
         end
         return_hash
