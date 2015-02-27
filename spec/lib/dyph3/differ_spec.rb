@@ -1,5 +1,5 @@
 require 'spec_helper'
-[Dyph3::TwoWayDiffers::ResigDiff].each do |current_differ|
+[Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
 
   describe Dyph3::Differ do
     describe "test" do
@@ -294,6 +294,7 @@ require 'spec_helper'
                             theirs: "<figref id=\"30836\"></figref>\n",
                             base: "\n\n"},
           {type: :non_conflict, text: "</p>\n"}]]
+
           expect(Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ)).to eql expected_result
       end
     end

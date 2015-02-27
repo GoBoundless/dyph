@@ -11,7 +11,7 @@ module Dyph3
         final_result.each do |result_block|
           block_text = case result_block[:type]
             when :non_conflict then result_block[:text]
-            when :conflict then "#{result_block[:ours]} #{result_block[:theirs]}"
+            when :conflict then [result_block[:ours], result_block[:theirs]].flatten
             else raise "Unknown block type, #{result_block[:type]}"
           end
           count_words(block_text, result_word_map)
@@ -26,7 +26,6 @@ module Dyph3
         # now make sure all new words are somewhere in the result
         missing_new_left_words = subtract_words(new_left_words, result_word_map)
         missing_new_right_words = subtract_words(new_right_words, result_word_map)
-
         if missing_new_left_words.any? || missing_new_right_words.any?
           raise BadMergeException.new(return_value)
         end
@@ -34,7 +33,7 @@ module Dyph3
 
       private
         def count_words(str, hash={})
-          str.split(/\s+/).reduce(hash) do |map, word|
+          str.reduce(hash) do |map, word|
             map[word] ||= 0
             map[word] += 1
             map
