@@ -19,12 +19,7 @@ module Dyph3
         result_diff3 = []
 
         # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB)
-        
-
-
         while d2[:left].length > 0 || d2[:right].length > 0
-
-
           r2 = { left: [], right: [] }
           #warning: this mutates r2 d2
 
