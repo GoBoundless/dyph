@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.files         = %w( README.md LICENSE )
   spec.files         += Dir.glob("lib/**/*.rb")
 
-  spec.required_ruby_version = '>= 2.1.0'
+  spec.required_ruby_version = '>= 2.2.0'
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
