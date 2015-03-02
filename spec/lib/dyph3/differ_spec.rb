@@ -4,9 +4,12 @@ require 'spec_helper'
 
     if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
       describe ".merge_two_way_diff" do
-        # it "should be null" do
-        #   expect(converter.convert_to_dyph3_output([], [])).to eq []
-        # end
+        it "show all no changes" do
+          t1 = "a b c d".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t1)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange]
+        end
+
 
         it "should show an add" do
           t1 = "a b c d".split
