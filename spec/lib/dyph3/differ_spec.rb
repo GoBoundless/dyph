@@ -1,7 +1,8 @@
 require 'spec_helper'
 [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
-  if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
-    describe Dyph3::Differ do
+  describe Dyph3::Differ do
+
+    if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
       describe ".merge_two_way_diff" do
         # it "should be null" do
         #   expect(converter.convert_to_dyph3_output([], [])).to eq []
@@ -29,6 +30,7 @@ require 'spec_helper'
         end
       end
     end
+
     describe "test" do
       let(:base) { "This is the baseline.\nThe start.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
 
