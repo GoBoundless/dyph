@@ -1,7 +1,53 @@
 require 'spec_helper'
-[Dyph3::TwoWayDiffers::HeckelDiff, Dyph3::TwoWayDiffers::ResigDiff].each do |current_differ|
-
+[Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
   describe Dyph3::Differ do
+    if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
+      describe ".merge_two_way_diff" do
+        it "show all no changes" do
+          t1 = "a b c d".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t1)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange]
+        end
+
+
+        it "should show an add" do
+          t1 = "a b c d".split
+          t2 = "a b c d e".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Add]
+        end
+
+        it "should show a delete" do
+          t1 = "a b c d".split
+          t2 = "a b c".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete]
+        end
+
+        it "should show a change" do
+          t1 = "a b c d".split
+          t2 = "a b z d".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange]
+        end
+      end
+    end
+
+    describe "test split" do
+      let(:base) { [:a, :b, :c] }
+      let(:left) { [:a, :b, :c] }
+      let(:right) { [:a, :v, :c] }
+      let(:identity) { ->(x){ x } }
+
+      let(:merged_array) do
+         Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity, join_funtion: identity )
+      end
+
+      it "should have merged successuffly" do
+        expect(merged_array[0]).to eq right
+      end
+    end
+
     describe "test" do
       let(:base) { "This is the baseline.\nThe start.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
 
@@ -205,7 +251,7 @@ require 'spec_helper'
 
           expected_result = ["this is some text\nanother line of text",
             true,
-            [{:type=>:conflict, :ours=>"\n", :base=>"this is some text\n", :theirs=>"some text\n"},
+            [{:type=>:conflict, :ours=>"", :base=>"this is some text\n", :theirs=>"some text\n"},
             {:type=>:non_conflict, :text=>"another line of text"}]
           ]
           result = Dyph3::Differ.merge_text(ours, base, theirs, current_differ: current_differ)
@@ -221,7 +267,7 @@ require 'spec_helper'
             true,
             [{:type=>:non_conflict, :text=>"this is the first line\n"},
              {:type=>:conflict,
-              :ours=>"\n",
+              :ours=>"",
               :base=>"this is some text\n",
               :theirs=>"this is\n"},
              {:type=>:non_conflict, :text=>"another line of text"}]]
@@ -290,10 +336,11 @@ require 'spec_helper'
           base,
           true,
         [ {type: :non_conflict, text: "Some stuff:\n<figref id=\"30835\"></figref>\n<p>\nThis calculation can</p>\n"},
-          {type: :conflict, ours: "\n",
+          {type: :conflict, ours: "",
                             theirs: "<figref id=\"30836\"></figref>\n",
                             base: "\n\n"},
           {type: :non_conflict, text: "</p>\n"}]]
+
           expect(Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ)).to eql expected_result
       end
     end

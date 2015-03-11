@@ -9,6 +9,26 @@ module Dyph3
         correct_offsets(selected_actions)
       end
 
+      def objectify(merge_results)
+        merge_results.map do |result|
+          action = result[:action]
+          line   = result[:line]
+          old_index = result[:old_index]
+          new_index = result[:new_index]
+
+          case action
+          when :add
+            Dyph3::Add.new(value: line, old_index: old_index, new_index: new_index)
+          when :delete
+            Dyph3::Delete.new(value: line, old_index: old_index, new_index: new_index)
+          when :no_change
+            Dyph3::NoChange.new(value: line.text, old_index: old_index, new_index: new_index)
+          else
+            raise "unhandled action"
+          end
+        end
+      end
+
       def merge_results(old_text, new_text)
         merged_text = []
 

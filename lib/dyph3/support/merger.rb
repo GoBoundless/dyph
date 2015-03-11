@@ -19,8 +19,8 @@ module Dyph3
             initial_text << @text3.base[lineno - 1]
           end
 
-          initial_text = initial_text.join("\n") + "\n"
-          @result << {type: :non_conflict, text: initial_text} unless initial_text.length == 1
+          #initial_text = initial_text.join("\n") + "\n"
+          @result << {type: :non_conflict, text: initial_text} unless initial_text.empty?
 
           interpret_chunk(chunk_desc)
           #assign i2 to be the line in origtext after the conflict
@@ -55,7 +55,7 @@ module Dyph3
             (ia ... chunk_desc.left_lo).each do |lineno|
               non_conflict = {type: :non_conflict}
               non_conflict[:text] = accumulate_lines(ia, lineno, text_a)
-              @result << non_conflict
+              @result << non_conflict 
             end
 
             conflict = {}
@@ -68,15 +68,13 @@ module Dyph3
               conflict[:type] = :non_conflict
               conflict[:text] = accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, text_b)
             end
-
-            conflict[:base] = "" if conflict[:type] == :conflict && conflict[:base].nil?
+            conflict[:base] = [] if conflict[:type] == :conflict && conflict[:base].nil?
             ia = chunk_desc.left_hi + 1
             @result << conflict unless conflict.empty?
           end
 
           final_text = accumulate_lines(ia, text_a.length + 1, text_a)
-
-          @result << {type: :non_conflict, text: final_text} unless final_text == "\n"
+          @result << {type: :non_conflict, text: final_text} unless final_text.empty?
         end
 
         def set_text(orig_text, lo, hi)
@@ -105,7 +103,7 @@ module Dyph3
             # 0 flag means choose left.  put lines chunk_desc[1] .. chunk_desc[2] into the @result body.
             temp_text = accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, @text3.left)
             # they deleted it, don't use if its only a new line
-            @result << {type: :non_conflict, text: temp_text} unless temp_text == "\n"
+            @result << {type: :non_conflict, text: temp_text} unless temp_text.empty?
           elsif chunk_desc.action != :possible_conflict
             # A flag means choose right.  put lines chunk_desc[3] to chunk_desc[4] into the @result body.
             temp_text = accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, @text3.right)
@@ -134,10 +132,10 @@ module Dyph3
         def accumulate_lines(lo, hi, text)
           lines = []
           (lo .. hi).each do |lineno|
-            lines << text[lineno - 1]
+            lines << text[lineno - 1] unless text[lineno - 1].nil?
           end
-          lines = lines.join("\n")
-          lines += "\n" unless hi == text.length
+          #lines = lines.join("\n")
+          #lines += "\n" unless hi == text.length
           lines
         end
       end

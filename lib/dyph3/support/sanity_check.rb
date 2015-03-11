@@ -9,15 +9,15 @@ module Dyph3
         result_word_map = {}
 
         final_result.each do |result_block|
-          block_text = case result_block[:type]
+          blocks = case result_block[:type]
             when :non_conflict then result_block[:text]
-            when :conflict then "#{result_block[:ours]} #{result_block[:theirs]}"
+            when :conflict then [result_block[:ours], result_block[:theirs]].flatten
             else raise "Unknown block type, #{result_block[:type]}"
           end
-          count_words(block_text, result_word_map)
+          count_blocks(blocks, result_word_map)
         end
 
-        left_word_map, base_word_map, right_word_map = [left, base, right].map { |str| count_words(str) }
+        left_word_map, base_word_map, right_word_map = [left, base, right].map { |str| count_blocks(str) }
 
         # new words are words that are in left or right, but not in base
         new_left_words = subtract_words(left_word_map, base_word_map)
@@ -33,10 +33,10 @@ module Dyph3
       end
 
       private
-        def count_words(str, hash={})
-          str.split(/\s+/).reduce(hash) do |map, word|
-            map[word] ||= 0
-            map[word] += 1
+        def count_blocks(blocks, hash={})
+          blocks.reduce(hash) do |map, block|
+            map[block.inspect] ||= 0
+            map[block.inspect] += 1
             map
           end
         end
