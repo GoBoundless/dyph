@@ -18,7 +18,6 @@ module Dyph3
 
           case action
           when :add
-            #:action=>:add, :line=>"e", :old_index=>4, :new_index=>5}]
             Dyph3::Add.new(value: line, old_index: old_index, new_index: new_index)
           when :delete
             Dyph3::Delete.new(value: line, old_index: old_index, new_index: new_index)
