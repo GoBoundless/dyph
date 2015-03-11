@@ -8,14 +8,14 @@ module Dyph3
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
     end
 
-    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_funtion: standard_join)
+    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join)
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
       return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
 
       # sanity check: make sure anything new in left or right made it through the merge
       Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
-      join_results(return_value, join_function: join_funtion )
+      join_results(return_value, join_function: join_function )
     end
 
     def self.split_on_new_line

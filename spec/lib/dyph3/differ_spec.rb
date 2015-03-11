@@ -40,7 +40,7 @@ require 'spec_helper'
       let(:identity) { ->(x){ x } }
 
       let(:merged_array) do
-         Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity, join_funtion: identity )
+         Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity, join_function: identity )
       end
 
       it "should have merged successuffly" do
