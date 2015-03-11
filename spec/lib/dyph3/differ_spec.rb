@@ -1,7 +1,53 @@
 require 'spec_helper'
 [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
-
   describe Dyph3::Differ do
+    if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
+      describe ".merge_two_way_diff" do
+        it "show all no changes" do
+          t1 = "a b c d".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t1)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange]
+        end
+
+
+        it "should show an add" do
+          t1 = "a b c d".split
+          t2 = "a b c d e".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Add]
+        end
+
+        it "should show a delete" do
+          t1 = "a b c d".split
+          t2 = "a b c".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete]
+        end
+
+        it "should show a change" do
+          t1 = "a b c d".split
+          t2 = "a b z d".split
+          diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+          expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange]
+        end
+      end
+    end
+
+    describe "test split" do
+      let(:base) { [:a, :b, :c] }
+      let(:left) { [:a, :b, :c] }
+      let(:right) { [:a, :v, :c] }
+      let(:identity) { ->(x){ x } }
+
+      let(:merged_array) do
+         Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity, join_funtion: identity )
+      end
+
+      it "should have merged successuffly" do
+        expect(merged_array[0]).to eq right
+      end
+    end
+
     describe "test" do
       let(:base) { "This is the baseline.\nThe start.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
 
