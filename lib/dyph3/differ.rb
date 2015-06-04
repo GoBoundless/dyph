@@ -9,6 +9,9 @@ module Dyph3
     end
 
     def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join)
+      split_function = base.class::DIFF_PREPROCESSOR   if base.class.constants.include?(:DIFF_PREPROCESSOR)
+      join_function  = base.class::DIFF_POSTPROCESSOR  if base.class.constants.include?(:DIFF_POSTPROCESSOR)
+
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
       return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
