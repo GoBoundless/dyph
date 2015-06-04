@@ -48,6 +48,20 @@ require 'spec_helper'
       end
     end
 
+    describe "test split" do
+      let(:base) { Fish.new(:salmon) }
+      let(:left) { Fish.new(:salmon) }
+      let(:right) { Fish.new(:pollock) }
+
+      let(:merged_array) do
+        Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ )
+      end
+
+      it "should have merged successuffly" do
+        expect(merged_array[0]).to eq right
+      end
+    end
+
     describe "test" do
       let(:base) { "This is the baseline.\nThe start.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
 

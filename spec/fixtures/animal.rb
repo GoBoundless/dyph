@@ -7,6 +7,9 @@ end
 
 class Fish
   include Animal
+  DIFF_PREPROCESSOR = -> (animal) { [animal.type] }
+  DIFF_POSTPROCESSOR = -> (animal_array) { Fish.new(animal_array.first) }
+
   attr_accessor :type
   def initialize(type)
     @type = type
