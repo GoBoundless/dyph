@@ -8,19 +8,29 @@ module Dyph3
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
     end
 
-    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join)
+    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join, conflict_function: nil)
       split_function = base.class::DIFF_PREPROCESSOR   if base.class.constants.include?(:DIFF_PREPROCESSOR)
       join_function  = base.class::DIFF_POSTPROCESSOR  if base.class.constants.include?(:DIFF_POSTPROCESSOR)
 
+      conflict_function = base.class::DIFF_CONFLICT_PROCESSOR if base.class.constants.include?(:DIFF_CONFLICT_PROCESSOR)
+     
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
       return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
 
       # sanity check: make sure anything new in left or right made it through the merge
-      Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
-      join_results(return_value, join_function: join_function )
+      if has_conflict(return_value) && conflict_function
+        return_value = conflict_function[return_value]
+      else
+        Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
+      end      
+      join_results(return_value, join_function: join_function)
     end
 
+    def self.has_conflict(return_value)
+      return_value[1] #conflict indicator index
+    end
+    
     def self.split_on_new_line
       -> (some_string) { some_string.split(/(\n)/).each_slice(2).map { |x| x.join } }
     end
@@ -33,6 +43,7 @@ module Dyph3
       new_results = []
       new_results[0] = join_function.call old_results[0]
       new_results[1] = old_results[1]
+
       new_results[2] = old_results[2].map do |hash|
         return_hash = {}
         hash.keys.map do |key|
