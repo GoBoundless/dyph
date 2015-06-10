@@ -57,8 +57,21 @@ require 'spec_helper'
         Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ )
       end
 
-      it "should have merged successuffly" do
+      it "should have merged successfully" do
         expect(merged_array[0]).to eq right
+      end
+    end
+    describe "test conflict function" do
+      let(:base) { Fish.new(:salmon) }
+      let(:left) { Fish.new(:trout) }
+      let(:right) { Fish.new(:pollock) }
+
+      let!(:merged_array) do
+        Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ )
+      end
+
+      it "should have merged successfully" do
+        expect(merged_array.last.last[:conflict_custom]).to eq Fish.new :tuna
       end
     end
 
