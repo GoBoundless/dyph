@@ -67,7 +67,7 @@ module Dyph3
         def gather_up_actions(old_text, new_text, merged_text)
           prev_no_change_old = - 1
           new_text.map.with_index.each do |line, i|
-            if optional(line).text.value.nil?
+            if !line.is_a?(TextNode)
               merged_text << {action: :add, line: line, old_index: prev_no_change_old + 1, new_index: i+1}
             else
               prev_no_change_old = line.row
@@ -80,15 +80,15 @@ module Dyph3
           merged_text << {action: :no_change, line: line, old_index: line.row, new_index: index}
 
           ((prev_no_change_old+1) ... old_text.length).each do |n|
-            break if !optional(old_text[n]).text.value.nil?
+            break if old_text[n].is_a?(TextNode)
             merged_text << {action: :delete, line: old_text[n], old_index: n+1, new_index: index+1}
           end
         end
 
         def prepend_old_text(old_text, merged_text)
-          if optional(old_text.first).text.value.nil?
+          if !old_text.first.is_a?(TextNode)
             old_text.map.with_index.each do |line, i|
-              break if !optional(line).text.value.nil?
+              break if line.is_a?(TextNode)
               merged_text << {action: :delete, line: line, old_index:i+1, new_index: i}
             end
           end
