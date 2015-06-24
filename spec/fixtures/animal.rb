@@ -3,6 +3,12 @@ module Animal
     other.class == self.class &&
     other.type == self.type
   end
+
+  alias_method :eql?, :==
+
+  def hash
+    type.hash
+  end
 end
 
 class Fish
@@ -18,6 +24,10 @@ class Fish
     @type = type
   end
 
+  def text
+    "Blub"
+  end
+
 end
 
 class Bird
@@ -27,4 +37,9 @@ class Bird
   def initialize(type)
     @type = type
   end
+
+  def text
+    "Tweet"
+  end
+
 end
