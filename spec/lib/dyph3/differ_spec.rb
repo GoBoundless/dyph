@@ -71,7 +71,7 @@ require 'spec_helper'
       end
 
       it "should have merged successfully" do
-        expect(merged_array.last.last[:conflict_custom]).to eq Fish.new :tuna
+        expect(merged_array.last.last[:conflict_custom]).to eq [:tuna]
       end
     end
 
