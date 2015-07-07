@@ -1,6 +1,7 @@
 require 'spec_helper'
 [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
   describe Dyph3::Differ do
+
     if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
       describe ".merge_two_way_diff" do
         it "show all no changes" do
@@ -33,6 +34,14 @@ require 'spec_helper'
       end
     end
 
+    describe "hashes" do
+      it "should resolve this edge case" do
+        left = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 3619, "unique_id" => 432 } ]
+        base = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 3619, "unique_id" => 432 } ]
+        right = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 3619, "unique_id" => 432 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 10527, "unique_id" => 661 } ]
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+      end
+    end
     describe "test split" do
       let(:base) { [:a, :b, :c] }
       let(:left) { [:a, :b, :c] }
