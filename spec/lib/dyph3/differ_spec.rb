@@ -1,5 +1,5 @@
 require 'spec_helper'
-[Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
+[Dyph3::TwoWayDiffers::ResigDiff ].each do |current_differ|
   describe Dyph3::Differ do
     let(:identity) { ->(x){ x } }
     if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
@@ -34,13 +34,61 @@ require 'spec_helper'
       end
     end
 
-    describe "hashes" do
-      it "should resolve this edge case" do
-        left = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 3619, "unique_id" => 432 } ]
-        base = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 3619, "unique_id" => 432 } ]
-        right = [ { "atom_id" => 4700, "unique_id" => 430 }, { "atom_id" => 3619, "unique_id" => 432 }, { "atom_id" => 4699, "unique_id" => 431 }, { "atom_id" => 10527, "unique_id" => 661 } ]
+    describe "both moves and inserts" do
+      it "should handle when base and left match" do
+        left =  "ants bears cat dog".split
+        base =  "ants bears cat dog".split
+        right =  "ants elephant cat bears dog".split
         result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq right
+        expect(result[1]).to be false
       end
+
+      it "should handle when base and right match" do
+        right =  "ants bears cat dog".split
+        base =  "ants bears cat dog".split
+        left =  "ants elephant cat bears dog".split
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq left
+        expect(result[1]).to be false
+      end
+
+      it "should handle when base and left match" do
+        left =  "ants bears cat".split
+        base =  "ants bears cat".split
+        right =  "ants elephant cat bears".split
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq right
+        expect(result[1]).to be false
+      end
+
+      it "should handle when the first elements are switched and an insert at the end" do
+        left =  "ants bears cat".split
+        base =  "ants bears cat".split
+        right =  "bears ants cat elephant".split
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq right
+        expect(result[1]).to be false
+      end
+
+      it "should handle when the last elements are switched and an insert at the beginning" do
+        left =  "ants bears cat".split
+        base =  "ants bears cat".split
+        right =  "elephant ants cat bears".split
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq right
+        expect(result[1]).to be false
+      end
+
+      it "should handle when all three are different" do
+        left =  "ant bear cat monkey goat".split
+        base =  "ant bear cat monkey".split
+        right = "ant cat bear dog elephant monkey goat".split
+        result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
+        expect(result[0]).to eq right
+        expect(result[1]).to be false
+      end
+
     end
 
     describe "test split" do
