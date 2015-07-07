@@ -1,7 +1,7 @@
 require 'spec_helper'
 [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
   describe Dyph3::Differ do
-
+    let(:identity) { ->(x){ x } }
     if current_differ == Dyph3::TwoWayDiffers::HeckelDiff
       describe ".merge_two_way_diff" do
         it "show all no changes" do
@@ -42,11 +42,12 @@ require 'spec_helper'
         result = Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity , join_function: identity)
       end
     end
+
     describe "test split" do
       let(:base) { [:a, :b, :c] }
       let(:left) { [:a, :b, :c] }
       let(:right) { [:a, :v, :c] }
-      let(:identity) { ->(x){ x } }
+      
 
       let(:merged_array) do
          Dyph3::Differ.merge_text(left, base, right, current_differ: current_differ, split_function: identity, join_function: identity )
