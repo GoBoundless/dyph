@@ -8,7 +8,7 @@ module Dyph3
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
     end
 
-    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join, conflict_function: nil)
+    def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::ResigDiff, split_function: split_on_new_line, join_function: standard_join, conflict_function: nil)
       split_function = base.class::DIFF_PREPROCESSOR   if base.class.constants.include?(:DIFF_PREPROCESSOR)
       join_function  = base.class::DIFF_POSTPROCESSOR  if base.class.constants.include?(:DIFF_POSTPROCESSOR)
 
