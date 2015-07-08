@@ -2,8 +2,8 @@ module Dyph3
   module Support
     class Merger
       attr_reader :result, :current_differ
-      def self.merge(left, origtext, right, current_differ: Dyph3::TwoWayDiffers::ResigDiff)
-        merger  = Merger.new(left: left, origtext: origtext, right: right, current_differ: current_differ)
+      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
+        merger  = Merger.new(left: left, base: base, right: right, current_differ: current_differ)
         merger.execute_merge
         merger.result
       end
@@ -23,7 +23,7 @@ module Dyph3
           @result << {type: :non_conflict, text: initial_text} unless initial_text.empty?
 
           interpret_chunk(chunk_desc)
-          #assign i2 to be the line in origtext after the conflict
+          #assign i2 to be the line in base after the conflict
           i2 = chunk_desc.base_hi + 1
         end
 
@@ -34,10 +34,10 @@ module Dyph3
 
       protected
 
-        def initialize(left:, origtext:, right:, current_differ:)
+        def initialize(left:, base:, right:, current_differ:)
           @result = []
           @current_differ = current_differ
-          @text3 = Text3.new(left: left, right: right, base: origtext)
+          @text3 = Text3.new(left: left, right: right, base: base)
         end
 
         def set_conflict(chunk_desc)

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Dyph3::TwoWayDiffers::OutputConverter do
   let(:converter) { Dyph3::TwoWayDiffers::OutputConverter }
-  let(:differ)  { Dyph3::TwoWayDiffers::ResigDiff }
+  let(:differ)  { Dyph3::TwoWayDiffers::HeckelDiff }
 
   describe "work with resig differ" do
     it "should be null" do

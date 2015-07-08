@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Dyph3::Support::Diff3 do
-  let(:current_differ) { Dyph3::TwoWayDiffers::ResigDiff }
+  let(:current_differ) { Dyph3::TwoWayDiffers::HeckelDiff }
   let(:diff3)  { Dyph3::Support::Diff3 }
 
   [ lambda { |x| x.to_s } , lambda { |x| x.to_sym }, lambda { |x| Fish.new(x) } ].each do |f|
