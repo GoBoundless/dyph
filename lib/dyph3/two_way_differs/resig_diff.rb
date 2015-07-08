@@ -44,50 +44,32 @@ module Dyph3
         # move around.
         def convert_moves_to_additions(old_text, new_text)
           new_text.each_with_index do |value, index|
-            convert_moves_to_additions_for_array(new_text, index, old_text)
+            convert_moves_to_additions_at_index(new_text, index, old_text)
           end
           old_text.each_with_index do |value, index|
-            convert_moves_to_additions_for_array(old_text, index, new_text)
+            convert_moves_to_additions_at_index(old_text, index, new_text)
           end
         end
 
-        def convert_moves_to_additions_for_array(array, index, matching_array)
-          return if index >= array.length || index < 0
+        def convert_moves_to_additions_at_index(array, index, matching_array)
           value = array[index]
 
-          indexes_needing_conversion = []
-          value = array[index]
+          # we're not a TextNode so this is already an addition (or deletion)
+          return if !value.is_a?(Dyph3::TwoWayDiffers::TextNode)
 
-          if index > 1
-            previous_value = array[index - 1]
-            previous_previous_value = array[index - 2]
-            if previous_value.is_a?(Dyph3::TwoWayDiffers::TextNode) \
-              && previous_previous_value.is_a?(Dyph3::TwoWayDiffers::TextNode) \
-              && previous_value.row < previous_previous_value.row
-              indexes_needing_conversion << index - 1
-            end
-          end
-          if index < array.length - 1
-            next_value = array[index + 1]
-            next_next_value = array[index + 2]
-            if next_value.is_a?(Dyph3::TwoWayDiffers::TextNode) \
-              && next_next_value.is_a?(Dyph3::TwoWayDiffers::TextNode) \
-              && next_value.row > next_next_value.row
-              indexes_needing_conversion << index + 1
-            end
-          end
+          # there's no next element so we can't be a broken move
+          return if index >= array.length - 1
 
-          indexes_needing_conversion.each do |convert_index|
-            convert_value = array[convert_index]
-            array[convert_index] = convert_value.text
-            matching_array_index = convert_value.row
-            matching_array[matching_array_index] = convert_value.text
+          next_value = array[index + 1]
 
-            # make sure we didn't "break" any new nodes by removing this anchor
-            convert_moves_to_additions_for_array(array, convert_index + 1, matching_array)
-            convert_moves_to_additions_for_array(array, convert_index - 1, matching_array)
-            convert_moves_to_additions_for_array(matching_array, matching_array_index + 1, array)
-            convert_moves_to_additions_for_array(matching_array, matching_array_index - 1, array)
+          # the next element isn't a TextNode so we can't be broken
+          return if !next_value.is_a?(Dyph3::TwoWayDiffers::TextNode)
+
+          if value.row > next_value.row
+            # we were moved behind the next value, convert this move to an addition and deletion
+            array[index] = value.text
+            matching_array_index = value.row
+            matching_array[matching_array_index] = value.text
           end
         end
 
@@ -142,8 +124,7 @@ module Dyph3
           end
         end
 
-
-       def is_unchanged?(new_text, old_text, i, offset:, caller:)
+        def is_unchanged?(new_text, old_text, i, offset:, caller:)
           new_text[i].is_a?(TextNode) &&                                # current value is marked as uniq
           boundry_check(new_text, old_text, i, caller: caller) &&       # not off the end of the array
           !new_text[i + offset].is_a?(TextNode) &&                      # value + offset is not marked as unique
