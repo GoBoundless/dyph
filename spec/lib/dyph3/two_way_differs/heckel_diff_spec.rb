@@ -36,35 +36,5 @@ describe Dyph3::TwoWayDiffers::HeckelDiff do
           end
       end
     end
-
-    describe ".merge_two_way_diff" do
-      it "show all no changes" do
-        t1 = "a b c d".split
-        diff = Dyph3::Differ.merge_two_way_diff(t1, t1)
-        expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange]
-      end
-
-
-      it "should show an add" do
-        t1 = "a b c d".split
-        t2 = "a b c d e".split
-        diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
-        expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Add]
-      end
-
-      it "should show a delete" do
-        t1 = "a b c d".split
-        t2 = "a b c".split
-        diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
-        expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete]
-      end
-
-      it "should show a change" do
-        t1 = "a b c d".split
-        t2 = "a b z d".split
-        diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
-        expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange]
-      end
-    end
   end
 end

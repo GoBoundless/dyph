@@ -2,7 +2,7 @@ module Dyph3
   class Differ
     # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
-    def self.merge_two_way_diff(left_array, right_array, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
+    def self.merge_two_way_diff(left_array, right_array, current_differ: Dyph3::TwoWayDiffers::ResigDiff)
       diff_results = current_differ.execute_diff(left_array, right_array)
       raw_merge = Dyph3::TwoWayDiffers::OutputConverter.merge_results(diff_results[:old_text], diff_results[:new_text])
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
