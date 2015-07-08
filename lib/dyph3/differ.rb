@@ -16,15 +16,6 @@ module Dyph3
 
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
 
-      # short circuit diffing if left or right == base
-      if left == base
-        result = join_function.call(right)
-        return [result, false, [{ type: :non_conflict, text: result }]]
-      elsif right == base
-        result = join_function.call(left)
-        return [result, false, [{ type: :non_conflict, text: result }]]
-      end
-
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
       return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
 
