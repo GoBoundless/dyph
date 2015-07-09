@@ -7,54 +7,9 @@ module Dyph3
         raise ArgumentError, "Argument is not an array." unless old_text_array.is_a?(Array) && new_text_array.is_a?(Array)
 
         diff_result = diff(old_text_array, new_text_array)
-        chunks = diff_result.map { |block| TwoWayChunk.new(block) }
 
-        old_index = 0
-        old_text = []
-        new_index = 0
-        new_text = []
-        chunks.each do |chunk|
-          old_iteration = 0
-          while old_index + old_iteration < chunk.left_lo - 1     # chunk indexes are from 1
-            old_text << TextNode.new(text: old_text_array[old_index], row: new_index + old_iteration)
-            old_iteration += 1
-          end
-
-          new_iteration = 0
-          while new_index + new_iteration < chunk.right_lo - 1     # chunk indexes are from 1
-            new_text << TextNode.new(text: new_text_array[new_index], row: old_index + new_iteration)
-            new_iteration += 1
-          end
-
-          old_index += old_iteration
-          new_index += new_iteration
-
-          while old_index <= chunk.left_hi - 1     # chunk indexes are from 1
-            old_text << old_text_array[old_index]
-            old_index += 1
-          end
-
-          while new_index <= chunk.right_hi - 1     # chunk indexes are from 1
-            new_text << new_text_array[new_index]
-            new_index += 1
-          end
-        end
-
-        iteration = 0
-        while old_index + iteration < old_text_array.length
-          old_text << TextNode.new(text: old_text_array[old_index + iteration], row: new_index + iteration)
-          iteration += 1
-        end
-
-        iteration = 0
-        while new_index + iteration < new_text_array.length
-          new_text << TextNode.new(text: new_text_array[new_index + iteration], row: old_index + iteration)
-          iteration += 1
-        end
-
-        result = { old_text: old_text, new_text: new_text}
-
-        result
+        # convert to the Resig differ's output to be consistent
+        convert_to_resig_output(diff_result, old_text_array, new_text_array)
       end
 
       # Two-way diff based on the algorithm by P. Heckel.
@@ -136,6 +91,55 @@ module Dyph3
       end
 
       private
+        def self.convert_to_resig_output(heckel_diff, old_text_array, new_text_array)
+          chunks = heckel_diff.map { |block| TwoWayChunk.new(block) }
+
+          old_index = 0
+          old_text = []
+          new_index = 0
+          new_text = []
+          chunks.each do |chunk|
+            old_iteration = 0
+            while old_index + old_iteration < chunk.left_lo - 1     # chunk indexes are from 1
+              old_text << TextNode.new(text: old_text_array[old_index + old_iteration], row: new_index + old_iteration)
+              old_iteration += 1
+            end
+
+            new_iteration = 0
+            while new_index + new_iteration < chunk.right_lo - 1     # chunk indexes are from 1
+              new_text << TextNode.new(text: new_text_array[new_index + new_iteration], row: old_index + new_iteration)
+              new_iteration += 1
+            end
+
+            old_index += old_iteration
+            new_index += new_iteration
+
+            while old_index <= chunk.left_hi - 1     # chunk indexes are from 1
+              old_text << old_text_array[old_index]
+              old_index += 1
+            end
+
+            while new_index <= chunk.right_hi - 1     # chunk indexes are from 1
+              new_text << new_text_array[new_index]
+              new_index += 1
+            end
+          end
+
+          iteration = 0
+          while old_index + iteration < old_text_array.length
+            old_text << TextNode.new(text: old_text_array[old_index + iteration], row: new_index + iteration)
+            iteration += 1
+          end
+
+          iteration = 0
+          while new_index + iteration < new_text_array.length
+            new_text << TextNode.new(text: new_text_array[new_index + iteration], row: old_index + iteration)
+            iteration += 1
+          end
+
+          { old_text: old_text, new_text: new_text}
+        end
+
         def self.invert_target(target)
           if target == :your
             :their

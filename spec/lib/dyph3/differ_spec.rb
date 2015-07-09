@@ -442,5 +442,13 @@ describe Dyph3::Differ do
       diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
       expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange]
     end
+
+    it "should work with this real world complex example" do
+      t1 = ["#<Mido::TextBlock::Id id=\"atom_12225_brief_p_0a5374c2bb74790ed958dfb8516a76fc_0\">", "#<Mido::TextBlock::Type name=:p>", ":\"Human \"", ":\"activities \"", ":\"likely \"", ":\"caused \"", ":\"the \"", ":\"Holocene \"", ":\"mass \"", ":extinctions", ":\", \"", ":\"and \"", ":\"many \"", ":\"methods \"", ":\"have \"", ":\"been \"", ":\"employed \"", ":\"to \"", ":\"estimate \"", ":\"these \"", ":\"extinction \"", ":rates", ":\".\"", "#<Mido::TextBlock::Type closed=true name=:p>", "#<Mido::TextBlock::Id closed=true id=\"atom_12225_brief_p_0a5374c2bb74790ed958dfb8516a76fc_0\">"]
+      t2 = ["#<Mido::TextBlock::Id id=\"atom_12225_brief_p_27e015d07debd946ef199ab53ce1ca29_0\">", "#<Mido::TextBlock::Type name=:p>", ":\"Human \"", ":\"activities \"", ":\"probably \"", ":\"caused \"", ":\"the \"", ":\"Holocene \"", ":\"mass \"", ":extinctions", ":\"; \"", ":\"many \"", ":\"methods \"", ":\"have \"", ":\"been \"", ":\"employed \"", ":\"to \"", ":\"estimate \"", ":\"these \"", ":\"extinction \"", ":rates", ":\".\"", "#<Mido::TextBlock::Type closed=true name=:p>", "#<Mido::TextBlock::Id closed=true id=\"atom_12225_brief_p_27e015d07debd946ef199ab53ce1ca29_0\">"]
+      diff = Dyph3::Differ.merge_two_way_diff(t1, t2)
+
+      expect(diff.map(&:class)).to eq [ Dyph3::Delete, Dyph3::Add, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Delete, Dyph3::Add, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::Delete, Dyph3::Add ]
+    end
   end
 end
