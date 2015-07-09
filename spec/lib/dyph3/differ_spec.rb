@@ -2,7 +2,8 @@ require 'spec_helper'
 describe Dyph3::Differ do
   let(:identity) { ->(x){ x } }
 
-  [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
+  # [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
+  [Dyph3::TwoWayDiffers::OriginalHeckelDiff].each do |current_differ|
     describe current_differ do
       describe "both moves and inserts" do
         it "should handle when base and left match" do
@@ -50,7 +51,7 @@ describe Dyph3::Differ do
           expect(result[1]).to be false
         end
 
-        it "should handle when all three are different", skip: "legit broken with the heckel differ. Needs to be fixed soon" do
+        it "should handle when all three are different" do
           left =  "ant bear cat monkey goat".split
           base =  "ant bear cat monkey".split
           right = "ant cat bear dog elephant monkey goat".split

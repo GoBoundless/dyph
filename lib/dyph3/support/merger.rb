@@ -2,7 +2,7 @@ module Dyph3
   module Support
     class Merger
       attr_reader :result, :current_differ
-      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
+      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::OriginalHeckelDiff)
         merger  = Merger.new(left: left, base: base, right: right, current_differ: current_differ)
         merger.execute_merge
         merger.result
@@ -10,9 +10,9 @@ module Dyph3
 
       def execute_merge
         d3 = Diff3.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
+        chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
         i2 = 1
-        d3.each do |raw_chunk_desc|
-          chunk_desc = ChunkDesc.new(raw_chunk_desc)
+        chunk_descs.each do |chunk_desc|
           initial_text = []
 
           (i2 ... chunk_desc.base_lo).each do |lineno|                  # exclusive (...)
