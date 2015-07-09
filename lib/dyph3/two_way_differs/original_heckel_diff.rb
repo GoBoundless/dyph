@@ -3,6 +3,24 @@ module Dyph3
     class OriginalHeckelDiff
       # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
+      def self.execute_diff(old_text_array, new_text_array)
+        raise ArgumentError, "Argument is not an array." unless old_text_array.is_a?(Array) && new_text_array.is_a?(Array)
+        resig_diff = Dyph3::TwoWayDiffers::ResigDiff.execute_diff(old_text_array, new_text_array)
+
+        result = diff(old_text_array, new_text_array)
+        chunks = result.map { |block| TwoWayChunk.new(block) }
+
+        old_index = 1
+        new_index = 1
+        old_text = old_text_array.dup
+        new_text = new_text_array.dup
+        chunks.each do |chunk|
+
+          binding.pry
+        end
+
+        { old_text: old_text, new_text: new_text}
+      end
 
       # Two-way diff based on the algorithm by P. Heckel.
       # @param [in] text_a Array of lines of first text.
@@ -102,7 +120,7 @@ module Dyph3
             text_b << text3[0][i - 1]
           end
           d = diff(text_a, text_b)
-          if !_assoc_range(d, 'c').nil? && chunk_desc[5] <= chunk_desc[6]
+          if !_assoc_range(d, :change).nil? && chunk_desc[5] <= chunk_desc[6]
             conflict = {type: :conflict}
             conflict[:ours] = accumulate_lines(chunk_desc[1], chunk_desc[2], text3[0])
             conflict[:base] = accumulate_lines(chunk_desc[5], chunk_desc[6], text3[2])
@@ -120,11 +138,11 @@ module Dyph3
               res << non_conflict
             end
             conflict = {}
-            if r2[0] == 'c'
+            if r2[0] == :change
               conflict[:type] =  :conflict
               conflict[:ours] = accumulate_lines(r2[3], r2[4], text_b)
               conflict[:theirs] = accumulate_lines(r2[1], r2[2], text_a)
-            elsif r2[0] == 'a'
+            elsif r2[0] == :add
               conflict[:type] = :non_conflict
               conflict[:text] = accumulate_lines(r2[3], r2[4], text_b)
             end
@@ -222,11 +240,11 @@ module Dyph3
         # given the calculated bounds of the 2 way diff, create the proper conflict type and add it to the queue.
         def self.add_conflict(d, a0, a1, b0, b1)
           if a0 <= a1 && b0 <= b1 # for this conflict, the bounds are both 'normal'.  the beginning of the conflict is before the end.
-            d << ['c', a0 + 1, a1 + 1, b0 + 1, b1 + 1]
+            d << [:change, a0 + 1, a1 + 1, b0 + 1, b1 + 1]
           elsif a0 <= a1
-            d << ['d', a0 + 1, a1 + 1, b0 + 1, b0]
+            d << [:delete, a0 + 1, a1 + 1, b0 + 1, b0]
           elsif b0 <= b1
-            d << ['a', a0 + 1, a0, b0 + 1, b1 + 1]
+            d << [:add, a0 + 1, a0, b0 + 1, b1 + 1]
           end
           d
         end
@@ -315,5 +333,17 @@ module Dyph3
           result
         end
     end
+
+    class TwoWayChunk
+      attr_reader :action, :left_lo, :left_hi, :right_lo, :right_hi
+      def initialize(raw_chunk)
+        @action   = raw_chunk[0]
+        @left_lo  = raw_chunk[1]
+        @left_hi  = raw_chunk[2]
+        @right_lo = raw_chunk[3]
+        @right_hi = raw_chunk[4]
+      end
+    end
+
   end
 end
