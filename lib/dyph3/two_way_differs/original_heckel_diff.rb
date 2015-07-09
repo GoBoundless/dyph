@@ -5,7 +5,6 @@ module Dyph3
 
       def self.execute_diff(old_text_array, new_text_array)
         raise ArgumentError, "Argument is not an array." unless old_text_array.is_a?(Array) && new_text_array.is_a?(Array)
-        resig_result = Dyph3::TwoWayDiffers::ResigDiff.execute_diff(old_text_array, new_text_array)
 
         diff_result = diff(old_text_array, new_text_array)
         chunks = diff_result.map { |block| TwoWayChunk.new(block) }
@@ -15,20 +14,20 @@ module Dyph3
         new_index = 0
         new_text = []
         chunks.each do |chunk|
-          temp_old_offset = 0
-          temp_new_offset = 0
-
-          while old_index < chunk.left_lo - 1     # chunk indexes are from 1
-            old_text << TextNode.new(text: old_text_array[old_index], row: new_index + temp_new_offset)
-            old_index += 1
-            temp_new_offset += 1
+          old_iteration = 0
+          while old_index + old_iteration < chunk.left_lo - 1     # chunk indexes are from 1
+            old_text << TextNode.new(text: old_text_array[old_index], row: new_index + old_iteration)
+            old_iteration += 1
           end
 
-          while new_index < chunk.right_lo - 1     # chunk indexes are from 1
-            new_text << TextNode.new(text: new_text_array[new_index], row: old_index + temp_old_offset)
-            new_index += 1
-            temp_old_offset += 1
+          new_iteration = 0
+          while new_index + new_iteration < chunk.right_lo - 1     # chunk indexes are from 1
+            new_text << TextNode.new(text: new_text_array[new_index], row: old_index + new_iteration)
+            new_iteration += 1
           end
+
+          old_index += old_iteration
+          new_index += new_iteration
 
           while old_index <= chunk.left_hi - 1     # chunk indexes are from 1
             old_text << old_text_array[old_index]
@@ -41,25 +40,19 @@ module Dyph3
           end
         end
 
-        temp_old_offset = 0
-        while old_index < old_text_array.length
-          old_text << TextNode.new(text: old_text_array[old_index], row: new_index + temp_old_offset)
-          old_index += 1
-          temp_old_offset += 1
+        iteration = 0
+        while old_index + iteration < old_text_array.length
+          old_text << TextNode.new(text: old_text_array[old_index + iteration], row: new_index + iteration)
+          iteration += 1
         end
 
-        temp_new_offset = 0
-        while new_index < new_text_array.length
-          new_text << TextNode.new(text: new_text_array[new_index], row: new_index + temp_new_offset)
-          new_index += 1
-          temp_new_offset += 1
+        iteration = 0
+        while new_index + iteration < new_text_array.length
+          new_text << TextNode.new(text: new_text_array[new_index + iteration], row: old_index + iteration)
+          iteration += 1
         end
 
         result = { old_text: old_text, new_text: new_text}
-
-        ap resig_result
-        ap result
-        binding.pry
 
         result
       end

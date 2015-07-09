@@ -35,7 +35,13 @@ module Dyph3
 
         convert_moves_to_additions(old_text, new_text)
 
-        { old_text: old_text, new_text: new_text}
+        resig_result = { old_text: old_text, new_text: new_text}
+
+        # heckel_result = OriginalHeckelDiff.execute_diff(old_text_array, new_text_array)
+
+        # binding.pry
+
+        # heckel_result
       end
 
       private
