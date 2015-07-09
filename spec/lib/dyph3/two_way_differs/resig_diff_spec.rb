@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe Dyph3::TwoWayDiffers::ResigDiff do
-  let(:differ) { Dyph3::TwoWayDiffers::ResigDiff }
+describe Dyph3::TwoWayDiffers::OriginalHeckelDiff do
+  let(:differ) { Dyph3::TwoWayDiffers::OriginalHeckelDiff }
   describe '.diff' do
     let(:iterations) { 10 }
     describe 'no change on an increasing array size, 0 to n - 1' do
