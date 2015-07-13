@@ -1,6 +1,6 @@
 module Dyph3
   class Base
-    attr_reader :value, :old_index, :new_index
+    attr_accessor :value, :old_index, :new_index
 
     def initialize(value:, old_index:, new_index:)
       @value = value
