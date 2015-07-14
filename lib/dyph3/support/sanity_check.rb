@@ -35,8 +35,8 @@ module Dyph3
       private
         def count_blocks(blocks, hash={})
           blocks.reduce(hash) do |map, block|
-            map[block.inspect] ||= 0
-            map[block.inspect] += 1
+            map[block] ||= 0
+            map[block] += 1
             map
           end
         end
