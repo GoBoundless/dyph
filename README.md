@@ -1,6 +1,6 @@
 diff3
 =====
-[![Build Status](https://travis-ci.org/GoBoundless/dyph3.svg)](https://travis-ci.org/GoBoundless/dyph3)
+[![Circle CI](https://circleci.com/gh/GoBoundless/dyph3.svg?style=svg)](https://circleci.com/gh/GoBoundless/dyph3)
 [![Code Climate](https://codeclimate.com/github/GoBoundless/dyph3/badges/gpa.svg)](https://codeclimate.com/github/GoBoundless/dyph3)
 [![Test Coverage](https://codeclimate.com/github/GoBoundless/dyph3/badges/coverage.svg)](https://codeclimate.com/github/GoBoundless/dyph3)
 
