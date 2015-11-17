@@ -1,0 +1,6 @@
+test:
+  override:
+    - bundle exec rspec --format documentation --format RspecJunitFormatter --out $CIRCLE_TEST_REPORTS/rspec.xml:
+        parallel: true
+        files:
+          - spec/**/*_spec.rb
