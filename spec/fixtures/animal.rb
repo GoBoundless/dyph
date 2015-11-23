@@ -16,7 +16,7 @@ class Fish
   DIFF_PREPROCESSOR = -> (animal) { [animal.type] }
   DIFF_POSTPROCESSOR = -> (animal_array) { Fish.new(animal_array.first) }
   DIFF_CONFLICT_PROCESSOR = ->(differ_output) do
-    differ_output[2].first[:conflict_custom] = [:tuna]
+    differ_output.first[:conflict_custom] = [:tuna]
     differ_output
   end
   attr_accessor :type
@@ -32,7 +32,7 @@ end
 
 class Bird
   include Animal
-  
+
   attr_accessor :type
   def initialize(type)
     @type = type
