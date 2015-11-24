@@ -11,7 +11,7 @@ describe Dyph3::Differ do
           base =  "ants bears cat dog".split
           right =  "ants elephant cat bears dog".split
           merge_result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(merge_result.results).to eq right
+          expect(merge_result.joined_results).to eq right
           expect(merge_result.success?).to be true
         end
 
@@ -20,7 +20,7 @@ describe Dyph3::Differ do
           base =  "ants bears cat dog".split
           left =  "ants elephant cat bears dog".split
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(result.results).to eq left
+          expect(result.joined_results).to eq left
           expect(result.success?).to be true
         end
 
@@ -29,7 +29,7 @@ describe Dyph3::Differ do
           base =  "ants bears cat".split
           right =  "ants elephant cat bears".split
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(result.results).to eq right
+          expect(result.joined_results).to eq right
           expect(result.success?).to be true
         end
 
@@ -38,7 +38,7 @@ describe Dyph3::Differ do
           base =  "ants bears cat".split
           right =  "bears ants cat elephant".split
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(result.results).to eq right
+          expect(result.joined_results).to eq right
           expect(result.success?).to be true
         end
 
@@ -47,7 +47,7 @@ describe Dyph3::Differ do
           base =  "ants bears cat".split
           right =  "elephant ants cat bears".split
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(result.results).to eq right
+          expect(result.joined_results).to eq right
           expect(result.success?).to be true
         end
 
@@ -56,7 +56,7 @@ describe Dyph3::Differ do
           base =  "ant bear cat monkey".split
           right = "ant cat bear dog elephant monkey goat".split
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
-          expect(result.results).to eq right
+          expect(result.joined_results).to eq right
           expect(result.success?).to be true
         end
 
@@ -67,7 +67,7 @@ describe Dyph3::Differ do
 
           result = Dyph3::Differ.merge_text(left, base, right, split_function: identity, join_function: identity, current_differ: current_differ)
 
-          expect(result.results).to eq right
+          expect(result.joined_results).to eq right
           expect(result.success?).to be true
         end
       end
@@ -83,7 +83,7 @@ describe Dyph3::Differ do
         end
 
         it "should have merged successuffly" do
-          expect(merged_array.results).to eq right
+          expect(merged_array.joined_results).to eq right
         end
       end
 
@@ -97,7 +97,7 @@ describe Dyph3::Differ do
         end
 
         it "should have merged successfully" do
-          expect(merged_array.results).to eq right
+          expect(merged_array.joined_results).to eq right
         end
       end
       describe "test conflict function" do
@@ -110,7 +110,7 @@ describe Dyph3::Differ do
         end
 
         it "should have merged successfully" do
-          expect(merged_array.results.first[:conflict_custom]).to eq [:tuna]
+          expect(merged_array.joined_results.first[:conflict_custom]).to eq [:tuna]
         end
       end
 
@@ -129,22 +129,22 @@ describe Dyph3::Differ do
 
         it "should not explode" do
           res = Dyph3::Differ.merge_text(left, base, right, join_function: ->(x) { x } )
-          expect(res.results).to eq expected_result
+          expect(res.joined_results).to eq expected_result
         end
 
         it "should not be conflicted when not conflicted" do
           result = Dyph3::Differ.merge_text(left, base, left)
-          expect(result.results).to eq left
+          expect(result.joined_results).to eq left
         end
 
         it "should not be conflicted with the same text" do
           result = Dyph3::Differ.merge_text(left, left, left)
-          expect(result.results).to eq left
+          expect(result.joined_results).to eq left
         end
 
         it "should not be conflicted when not conflicted" do
           result = Dyph3::Differ.merge_text(base, base, base)
-          expect(result.results).to eq base
+          expect(result.joined_results).to eq base
         end
 
         # issue adding \n to the beginning and end of a line
@@ -154,7 +154,7 @@ describe Dyph3::Differ do
           right = "Article title"
 
           result = Dyph3::Differ.merge_text(left, base, right)
-          expect(result.results).to eq left
+          expect(result.joined_results).to eq left
         end
 
         it "should handle one side unchanged" do
@@ -163,12 +163,12 @@ describe Dyph3::Differ do
           right = "Article title"
 
           result = Dyph3::Differ.merge_text(left, base, right)
-          expect(result.results).to eq left
+          expect(result.joined_results).to eq left
         end
 
         it "should handle empty strings" do
           result = Dyph3::Differ.merge_text("", "", "")
-          expect(result.results).to eq ""
+          expect(result.joined_results).to eq ""
         end
 
         it "should handle null inputs" do
@@ -194,7 +194,7 @@ describe Dyph3::Differ do
 
         it "should produce a conflict" do
           result = Dyph3::Differ.merge_text(left, base, right)
-          expect(result.results).to eq expected_result
+          expect(result.joined_results).to eq expected_result
           expect(result.conflict?).to eq true
         end
       end
@@ -210,7 +210,7 @@ describe Dyph3::Differ do
               {type: :conflict, ours: "THIS IS some text\n", base: "this is some text\n", theirs: "THIS IS SOME TEXT\n"},
               {type: :non_conflict, text: "another line of text\none more good line\nthats about it now\nthis is the last line\n"}]
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
         end
 
@@ -222,7 +222,7 @@ describe Dyph3::Differ do
               {type: :conflict, ours: "thats about it NOW\nTHIS is the last line\n", base: "thats about it now\nthis is the last line\n", theirs: "thats about it no\nTHIS is the LAST LINE\n"}
           ]
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
 
         end
@@ -235,7 +235,7 @@ describe Dyph3::Differ do
               {type: :non_conflict, text: "thats about it now\nthis is the last line\n"}
             ]
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
         end
 
@@ -250,7 +250,7 @@ describe Dyph3::Differ do
               {type: :non_conflict, text: "this is the last line\n"}
             ]
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
 
           expected_result_reversed = [
             {type: :non_conflict, text: "this is some text\n"},
@@ -260,7 +260,7 @@ describe Dyph3::Differ do
             {type: :non_conflict, text: "this is the last line\n"}
           ]
           result_reversed = Dyph3::Differ.merge_text(theirs, base, ours)
-          expect(result_reversed.results).to eq(expected_result_reversed)
+          expect(result_reversed.joined_results).to eq(expected_result_reversed)
         end
 
         it 'should handle a conflict, non_conflict, conflict pattern' do
@@ -273,7 +273,7 @@ describe Dyph3::Differ do
             {type: :non_conflict, text: "B\n"},
             {type: :conflict, ours: "C\n", base: "cc\n", theirs: "c\n" }
           ]
-          expect(result.results).to eq (expected_result)
+          expect(result.joined_results).to eq (expected_result)
         end
 
         it 'should handle periodic conflicts' do
@@ -289,7 +289,7 @@ describe Dyph3::Differ do
             {type: :conflict, ours: "WOOHOO!\n", base:"woohoo!\n", theirs:"wooHOO!\n"}
           ]
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq expected_result
+          expect(result.joined_results).to eq expected_result
           expect(result.conflict?).to eq true
         end
 
@@ -300,7 +300,7 @@ describe Dyph3::Differ do
           expected_string = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"
           expected_result = expected_string
           result = Dyph3::Differ.merge_text(ours, base, theirs)
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
           expect(result.success?).to eq(true)
         end
 
@@ -315,7 +315,7 @@ describe Dyph3::Differ do
               {:type=>:non_conflict, :text=>"another line of text"}
             ]
             result = Dyph3::Differ.merge_text(ours, base, theirs)
-            expect(result.results).to eq(expected_result)
+            expect(result.joined_results).to eq(expected_result)
             expect(result.conflict?).to eq(true)
           end
 
@@ -333,7 +333,7 @@ describe Dyph3::Differ do
               { :type=>:non_conflict, :text=>"another line of text"}
             ]
             result = Dyph3::Differ.merge_text(ours, base, theirs)
-            expect(result.results).to eq(expected_result)
+            expect(result.joined_results).to eq(expected_result)
           end
         end
 
@@ -343,7 +343,7 @@ describe Dyph3::Differ do
           theirs = 'apricot'
           result = Dyph3::Differ.merge_text(ours, base, theirs)
           expected_result = [{type: :conflict, ours: "apple", base: "", theirs: "apricot"}]
-          expect(result.results).to eq(expected_result)
+          expect(result.joined_results).to eq(expected_result)
         end
       end
 
@@ -352,31 +352,31 @@ describe Dyph3::Differ do
         non_trailing = "hi\nthis is text"
         it 'should not have a trailing newline where expected' do
           result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, non_trailing)
-          expect(result1.results[-1]).to_not eq("\n")
+          expect(result1.joined_results[-1]).to_not eq("\n")
           
           result2 = Dyph3::Differ.merge_text(non_trailing, trailing, non_trailing)
-          expect(result2.results[-1]).to_not eq("\n")
+          expect(result2.joined_results[-1]).to_not eq("\n")
           
           result3 = Dyph3::Differ.merge_text(non_trailing, trailing, trailing)
-          expect(result3.results[-1]).to_not eq("\n")
+          expect(result3.joined_results[-1]).to_not eq("\n")
           
           result4 = Dyph3::Differ.merge_text(trailing, trailing, non_trailing)
-          expect(result4.results[-1]).to_not eq("\n")
+          expect(result4.joined_results[-1]).to_not eq("\n")
         end
 
         it 'should have a trailing newline where expected' do
           result1 = Dyph3::Differ.merge_text(non_trailing, non_trailing, trailing)
-          expect(result1.results).to eq(trailing)
-          expect(result1.results[-1]).to eq("\n")
+          expect(result1.joined_results).to eq(trailing)
+          expect(result1.joined_results[-1]).to eq("\n")
 
           result2 = Dyph3::Differ.merge_text(trailing, non_trailing, non_trailing)
-          expect(result2.results[-1]).to eq("\n")
+          expect(result2.joined_results[-1]).to eq("\n")
 
           result3 = Dyph3::Differ.merge_text(trailing, non_trailing, trailing)
-          expect(result3.results[-1]).to eq("\n")
+          expect(result3.joined_results[-1]).to eq("\n")
 
           result4 = Dyph3::Differ.merge_text(trailing, trailing, trailing)
-          expect(result4.results[-1]).to eq("\n")
+          expect(result4.joined_results[-1]).to eq("\n")
 
         end
 
@@ -386,7 +386,7 @@ describe Dyph3::Differ do
           right = "\n<p>\nSome stuff\nAnd another line here\n</p>\nMore stuff here\n"
 
           result = Dyph3::Differ.merge_text(left, base, right)
-          expect(result.results).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
+          expect(result.joined_results).to eq ['', '<p>', 'Some stuff', 'Added a line here', 'And another line here', '</p>', 'More stuff here', ''].join("\n")
         end
 
         it "spot a conflict when left right and base don't agree" do
@@ -401,7 +401,7 @@ describe Dyph3::Differ do
             {type: :non_conflict, text: "</p>\n"}
           ]
           merged_text = Dyph3::Differ.merge_text(left, base, right)
-          expect(merged_text.results).to eql expected_result
+          expect(merged_text.joined_results).to eql expected_result
         end
       end
     end

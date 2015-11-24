@@ -10,26 +10,12 @@ module Dyph3
           if (merge_result.length == 1 && merge_result[0][:type] == :non_conflict)
             Dyph3::MergeResult::Success.new([{type: :non_conflict, text: merge_result[0][:text]}], join_function)
           else
-            Dyph3::MergeResult::Conflict.new(merge_result, conflict_function || ->(result) { apply_join_function(result, join_function) })
+            Dyph3::MergeResult::Conflict.new(merge_result, join_function, conflict_function)
           end
         end
       end
 
       private
-
-        def apply_join_function(result, join_function)
-          result.map do |hash|
-            return_hash = {}
-            hash.keys.map do |key|
-              if key == :type
-                return_hash[key] = hash[key]
-              else
-                return_hash[key] = join_function.call(hash[key])
-              end
-            end
-            return_hash
-          end
-        end
         # @param [in] conflicts
         # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
         def merge_non_conflicts(res, i = 0)
