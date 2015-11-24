@@ -6,9 +6,9 @@ module Dyph3
       def ensure_no_lost_data(left, base, right, final_result)
         result_word_map = {}
         final_result.each do |result_block|
-          blocks = case result_block[:type]
-            when :non_conflict then result_block[:text]
-            when :conflict then [result_block[:ours], result_block[:theirs]].flatten
+          blocks = case result_block
+            when Outcome::Resolved then result_block.result
+            when Outcome::Conflicted then [result_block.left, result_block.right].flatten
             else raise "Unknown block type, #{result_block[:type]}"
           end
           count_blocks(blocks, result_word_map)

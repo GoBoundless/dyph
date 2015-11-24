@@ -20,7 +20,6 @@ describe Dyph3::Support::Merger do
       end
 
       it "should a conflict" do
-        #result = [type: :conflict, ours: [f.call("b")], base: [f.call("a")], theirs: [f.call("c")]]
         result = [Dyph3::Outcome::Conflicted.new(left: [f.call("b")], base: [f.call("a")], right: [f.call("c")])]
         expect(merger.merge([f.call('b')], [f.call('a')], [f.call('c')])).to eq result
       end

@@ -57,19 +57,19 @@ module Dyph3
               @result <<  Dyph3::Outcome::Resolved.new(accumulate_lines(ia, lineno, text_a))
             end
 
-            conflict = {}
-
-            if chunk_desc.action == :change
-              conflict[:type] =  :conflict
-              conflict[:ours] = accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, text_b)
-              conflict[:theirs] = accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, text_a)
+            outcome = if chunk_desc.action == :change
+              Outcome::Conflicted.new(
+                left: accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, text_b),
+                right: accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, text_a),
+                base: []
+              )
             elsif chunk_desc.action == :add
-              conflict[:type] = :non_conflict
-              conflict[:text] = accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, text_b)
+              Outcome::Resolved.new(
+                accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, text_b)
+              )
             end
-            conflict[:base] = [] if conflict[:type] == :conflict && conflict[:base].nil?
             ia = chunk_desc.left_hi + 1
-            @result << conflict unless conflict.empty?
+            @result << outcome if outcome
           end
 
           final_text = accumulate_lines(ia, text_a.length + 1, text_a)
@@ -133,11 +133,9 @@ module Dyph3
           (lo .. hi).each do |lineno|
             lines << text[lineno - 1] unless text[lineno - 1].nil?
           end
-          #lines = lines.join("\n")
-          #lines += "\n" unless hi == text.length
           lines
         end
-      end
+    end
 
     class Text3
       attr_reader :left, :right, :base
