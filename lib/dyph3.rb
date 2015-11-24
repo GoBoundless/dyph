@@ -2,8 +2,12 @@ require "dyph3/version"
 require "dyph3/differ"
 
 require "dyph3/merge_result"
-require "dyph3/merge_result/success"
-require "dyph3/merge_result/conflict"
+# require "dyph3/merge_result/success"
+# require "dyph3/merge_result/conflict"
+
+# require "dyph3/output"
+# require "dyph3/output/resolved"
+# require "dyph3/output/conflicted"
 
 require "dyph3/support/diff3"
 require "dyph3/support/collater"

@@ -1,18 +1,19 @@
 module Dyph3
   class MergeResult
     attr_reader :results
-    def initialize(results, join_function, conflict_handler=nil)
+    def initialize(results, join_function, conflict: false, conflict_handler: nil)
       @results = results
       @join_function = join_function
       @conflict_handler = conflict_handler
+      @conflict = conflict
     end
 
     def success?
-      self.class == Dyph3::MergeResult::Success
+      !@conflict
     end
 
     def conflict?
-      self.class == Dyph3::MergeResult::Conflict
+      @conflict
     end
 
     def typed_results
@@ -29,7 +30,17 @@ module Dyph3
         return_hash
       end
     end
+
+    def joined_results
+      if conflict?
+        if @conflict_handler
+          @conflict_handler[results]
+        else
+          typed_results
+        end
+      else
+        @join_function[results[0][:text]]
+      end
+    end
   end
-
-
 end

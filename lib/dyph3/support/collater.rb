@@ -2,15 +2,15 @@ module Dyph3
   module Support
     module Collater
       extend self
-      def collate_merge(merge_result, join_function, conflict_function)
+      def collate_merge(merge_result, join_function, conflict_handler)
         if merge_result.empty?
-          Dyph3::MergeResult::Success.new([{type: :non_conflict, text: []}], join_function)
+          Dyph3::MergeResult.new([{type: :non_conflict, text: []}], join_function)
         else
           merge_result = merge_non_conflicts(merge_result)
           if (merge_result.length == 1 && merge_result[0][:type] == :non_conflict)
-            Dyph3::MergeResult::Success.new([{type: :non_conflict, text: merge_result[0][:text]}], join_function)
+            Dyph3::MergeResult.new([{type: :non_conflict, text: merge_result[0][:text]}], join_function)
           else
-            Dyph3::MergeResult::Conflict.new(merge_result, join_function, conflict_function)
+            Dyph3::MergeResult.new(merge_result, join_function, conflict: true, conflict_handler: conflict_handler)
           end
         end
       end
