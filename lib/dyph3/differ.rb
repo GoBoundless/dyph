@@ -19,7 +19,7 @@ module Dyph3
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
       collated_merge_results = Dyph3::Support::Collater.collate_merge(merge_result, join_function, conflict_function)
       if collated_merge_results.success?
-        Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, collated_merge_results.value)
+        Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, collated_merge_results.results)
       end
 
       collated_merge_results
