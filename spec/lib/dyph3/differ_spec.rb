@@ -1,7 +1,8 @@
 require 'spec_helper'
 describe Dyph3::Differ do
   let(:identity) { ->(x){ x } }
-
+  #conflict function just applys a join on each outcome item
+  let(:conflict_function) { ->(xs) { xs.map { |x| x.apply(->(array) {array.join})}} }
   # [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
   [Dyph3::TwoWayDiffers::OriginalHeckelDiff].each do |current_differ|
     describe current_differ do
@@ -195,7 +196,7 @@ describe Dyph3::Differ do
             Dyph3::Outcome::Resolved.new("</p>")]
 
         it "should produce a conflict" do
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function )
           expect(result.joined_results).to eq expected_result
           expect(result.conflict?).to eq true
         end
@@ -211,7 +212,7 @@ describe Dyph3::Differ do
           expected_result = [
               Dyph3::Outcome::Conflicted.new(left: "THIS IS some text\n", base: "this is some text\n", right: "THIS IS SOME TEXT\n"),
               Dyph3::Outcome::Resolved.new("another line of text\none more good line\nthats about it now\nthis is the last line\n")]
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
         end
@@ -223,7 +224,7 @@ describe Dyph3::Differ do
               Dyph3::Outcome::Resolved.new("this is some text\nanother line of text\none more good line\n"),
               Dyph3::Outcome::Conflicted.new(left: "thats about it NOW\nTHIS is the last line\n", base: "thats about it now\nthis is the last line\n", right: "thats about it no\nTHIS is the LAST LINE\n")
           ]
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
 
@@ -236,7 +237,7 @@ describe Dyph3::Differ do
             Dyph3::Outcome::Conflicted.new(left: "one more BAD line\nwe inserted a line\n", base: "one more good line\n", right: "one more GREAT line\nthey inserted a line\n"),
             Dyph3::Outcome::Resolved.new("thats about it now\nthis is the last line\n")
           ]
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq(expected_result)
           expect(result.conflict?).to eq(true)
         end
@@ -253,7 +254,8 @@ describe Dyph3::Differ do
                 right: "another line of text\none more GOOD line\nthats ABOUT it now\n"),
               Dyph3::Outcome::Resolved.new("this is the last line\n")
             ]
-          result = Dyph3::Differ.merge_text(left, base, right)
+
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq(expected_result)
 
           expected_result_reversed = [
@@ -263,7 +265,7 @@ describe Dyph3::Differ do
                               left: "another line of text\none more GOOD line\nthats ABOUT it now\n"),
             Dyph3::Outcome::Resolved.new("this is the last line\n")
           ]
-          result_reversed = Dyph3::Differ.merge_text(right, base, left)
+          result_reversed = Dyph3::Differ.merge_text(right, base, left, conflict_function: conflict_function)
           expect(result_reversed.joined_results).to eq(expected_result_reversed)
         end
 
@@ -271,7 +273,7 @@ describe Dyph3::Differ do
           our_text = "A\nB\nC\n"
           their_text = "a\nB\nc\n"
           base_text = "aa\nB\ncc\n"
-          result = Dyph3::Differ.merge_text(our_text, base_text, their_text)
+          result = Dyph3::Differ.merge_text(our_text, base_text, their_text, conflict_function: conflict_function)
           expected_result = [
             Dyph3::Outcome::Conflicted.new(left: "A\n", base: "aa\n", right: "a\n"),
             Dyph3::Outcome::Resolved.new("B\n"),
@@ -292,7 +294,7 @@ describe Dyph3::Differ do
             Dyph3::Outcome::Resolved.new("this is the last line\n"),
             Dyph3::Outcome::Conflicted.new(left: "WOOHOO!\n", base:"woohoo!\n", right:"wooHOO!\n")
           ]
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq expected_result
           expect(result.conflict?).to eq true
         end
@@ -303,7 +305,7 @@ describe Dyph3::Differ do
           right          = "this is some text\nanother line of text\none more good line\nthats ABOUT it now\nthis is the last line\n"
           expected_string = "this is some text\nANOTHER LINE OF TEXT\none more good line\nthats ABOUT it now\nthis is the last line\n"
           expected_result = expected_string
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(result.joined_results).to eq(expected_result)
           expect(result.success?).to eq(true)
         end
@@ -318,7 +320,7 @@ describe Dyph3::Differ do
                Dyph3::Outcome::Conflicted.new(:left=>"", :base=>"this is some text\n", :right=>"some text\n"),
                Dyph3::Outcome::Resolved.new("another line of text")
             ]
-            result = Dyph3::Differ.merge_text(left, base, right)
+            result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
             expect(result.joined_results).to eq(expected_result)
             expect(result.conflict?).to eq(true)
           end
@@ -336,7 +338,7 @@ describe Dyph3::Differ do
                   right: "this is\n"),
                Dyph3::Outcome::Resolved.new("another line of text")
             ]
-            result = Dyph3::Differ.merge_text(left, base, right)
+            result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
             expect(result.joined_results).to eq(expected_result)
           end
         end
@@ -345,7 +347,7 @@ describe Dyph3::Differ do
           left = 'apple'
           base = ''
           right = 'apricot'
-          result = Dyph3::Differ.merge_text(left, base, right)
+          result = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expected_result = [ Dyph3::Outcome::Conflicted.new(left: "apple", base: "", right: "apricot")]
           expect(result.joined_results).to eq(expected_result)
         end
@@ -406,7 +408,7 @@ describe Dyph3::Differ do
             ),
             Dyph3::Outcome::Resolved.new("</p>\n")
           ]
-          merged_text = Dyph3::Differ.merge_text(left, base, right)
+          merged_text = Dyph3::Differ.merge_text(left, base, right, conflict_function: conflict_function)
           expect(merged_text.joined_results).to eql expected_result
         end
       end
