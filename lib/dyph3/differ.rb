@@ -17,19 +17,12 @@ module Dyph3
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
 
       merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ)
-      return_value = Dyph3::Support::Collater.collate_merge(left, base, right, merge_result)
-
-      # sanity check: make sure anything new in left or right made it through the merge
-      if has_conflict(return_value) && conflict_function
-        conflict_function[return_value]
-      else
-        Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, return_value)
-        join_results(return_value, join_function: join_function)
+      collated_merge_results = Dyph3::Support::Collater.collate_merge(merge_result, join_function, conflict_function)
+      if collated_merge_results.success?
+        Dyph3::Support::SanityCheck.ensure_no_lost_data(left, base, right, collated_merge_results.results)
       end
-    end
 
-    def self.has_conflict(return_value)
-      return_value[1] #conflict indicator index
+      collated_merge_results
     end
 
     def self.split_on_new_line
@@ -39,25 +32,5 @@ module Dyph3
     def self.standard_join
       -> (array) { array.join }
     end
-
-    def self.join_results(old_results, join_function:)
-      new_results = []
-      new_results[0] = join_function.call old_results[0]
-      new_results[1] = old_results[1]
-
-      new_results[2] = old_results[2].map do |hash|
-        return_hash = {}
-        hash.keys.map do |key|
-          if key == :type
-            return_hash[key] = hash[key]
-          else
-            return_hash[key] = join_function.call(hash[key])
-          end
-        end
-        return_hash
-      end
-      new_results
-    end
   end
-
 end
