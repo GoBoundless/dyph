@@ -7,14 +7,6 @@ module Dyph3
       @right  = right
     end
 
-    # def eql?(other)
-    #   self.class == other.class &&
-    #   self.left == other.left &&
-    #   self.base == other.base &&
-    #   self.right == other.right
-    # end
-
-
     def ==(other)
       self.class == other.class &&
       self.left == other.left &&

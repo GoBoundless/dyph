@@ -19,15 +19,6 @@ module Dyph3
     def typed_results
       #results but with the joined function applied to the text fields
       results.map{ |result| result.apply(@join_function)}
-        #return_hash = {}
-        # hash.keys.map do |key|
-        #   if key == :type
-        #     return_hash[key] = hash[key]
-        #   else
-        #     return_hash[key] = @join_function.call(hash[key])
-        #   end
-        # end
-        # return_hash
     end
 
     def joined_results
