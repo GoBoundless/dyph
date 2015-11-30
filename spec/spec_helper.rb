@@ -1,13 +1,14 @@
+require "codeclimate-test-reporter"
+CodeClimate::TestReporter.start
+
+require 'dyph3'
+
 require "pry"
 require "awesome_print"
 require 'codeclimate-test-reporter'
+
 Dir[File.dirname(__FILE__) + '/fixtures/*.rb'].each {|file| require file }
 
-SimpleCov.start do
-  formatter SimpleCov::Formatter::MultiFormatter[
-    SimpleCov::Formatter::HTMLFormatter,
-    CodeClimate::TestReporter::Formatter
-  ]
+RSpec.configure do |config|
+  config.color = true
 end
-
-require 'dyph3'
