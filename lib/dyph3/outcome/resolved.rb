@@ -18,6 +18,7 @@ module Dyph3
 
     def combine(other)
        @result += other.result
+       self
     end
 
     def apply(fun)

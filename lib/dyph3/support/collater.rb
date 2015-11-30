@@ -6,7 +6,7 @@ module Dyph3
         if merge_result.empty?
           Dyph3::MergeResult.new([Outcome::Resolved.new([])], join_function)
         else
-          merge_result = merge_non_conflicts(merge_result)
+          merge_result = collapse_non_conflicts(merge_result)
           if (merge_result.length == 1 && merge_result.first.resolved?)
             Dyph3::MergeResult.new(merge_result, join_function)
           else
@@ -18,16 +18,15 @@ module Dyph3
       private
         # @param [in] conflicts
         # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
-        def merge_non_conflicts(res, i = 0)
-          while i < res.length - 1
-            if res[i].resolved? && res[i+1].resolved?
-              res[i].combine(res[i+1])
-              res.delete_at(i+1)
+        def collapse_non_conflicts(res, i = 0)
+          res.reduce([]) do |results, r|
+            if results.any? && results.last.resolved? && r.resolved?
+              results.last.combine(r)
             else
-              i += 1
+              results << r
             end
+            results
           end
-          res
         end
     end
   end
