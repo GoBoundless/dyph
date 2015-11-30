@@ -16,20 +16,16 @@ module Dyph3
       @conflict
     end
 
-    def typed_results
-      #results but with the joined function applied to the text fields
-      results.map{ |result| result.apply(@join_function)}
-    end
-
     def joined_results
       if conflict?
         if @conflict_handler
           @conflict_handler[results]
         else
-          typed_results
+          results
         end
       else
-        @join_function[results.first.result]
+        first, rest = results.first, results[1..-1]
+        rest.reduce(first) { |rs, r| rs.combine(r) }.apply(@join_function).result
       end
     end
   end
