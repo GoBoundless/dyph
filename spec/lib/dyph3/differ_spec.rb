@@ -4,7 +4,7 @@ describe Dyph3::Differ do
   #conflict function just applys a join on each outcome item
   let(:conflict_function) { ->(xs) { xs.map { |x| x.apply(->(array) {array.join})}} }
   # [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
-  [Dyph3::TwoWayDiffers::OriginalHeckelDiff].each do |current_differ|
+  [Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
     describe current_differ do
       describe "both moves and inserts" do
         it "should handle when base and left match" do

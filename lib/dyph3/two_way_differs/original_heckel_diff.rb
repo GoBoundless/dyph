@@ -288,30 +288,6 @@ module Dyph3
           d
         end
 
-        def self.set_targets(d2)
-          #run out of conflicts in :your queue
-          if d2[:your].empty?
-            i_target = :their
-          else
-            #run out of conflicts in :their queue
-            if d2[:their].empty?
-              i_target = :your
-            else
-              #there are conflicts in both queues. let the target be the earlier one.
-              if d2[:your][0][1] <= d2[:their][0][1]
-                i_target = :your
-              else
-                i_target = :their
-              end
-            end
-          end
-
-          j_target = i_target
-          k_target = invert_target(i_target) # k_target is opposite of i and j
-
-          [i_target, j_target, k_target]
-        end
-
         # @param [in] conflicts
         # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
         def self.merge_non_conflicts(res, i = 0)
@@ -354,23 +330,6 @@ module Dyph3
           return (our_newline && base_newline && their_newline) || !base_newline && (our_newline || their_newline)
         end
 
-        # @param [in] ours        unsplit text of ours
-        # @param [in] base        unsplit text of base
-        # @param [in] theirs      unsplit text of theirs
-        # @returns the result with the possible trailing newlines added if necessary.
-        def self.handle_trailing_newline(ours, base, theirs, result)
-          last = result[-1]
-          if last[:type] == :non_conflict && last[:text] != "\n" 
-            last[:text] += "\n" if add_trailing_newline?(ours, base, theirs)
-          elsif last[:type] == :non_conflict && last[:text] == "\n"
-            result = result[0...-1]
-          elsif result[-1][:type] == :conflict
-            last[:ours] += "\n" if ours[-1] == "\n"
-            last[:theirs] += "\n" if theirs[-1] == "\n"
-            last[:base] += "\n" if base[-1] == "\n"
-          end
-          result
-        end
     end
 
     class TwoWayChunk
