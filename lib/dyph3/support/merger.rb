@@ -2,7 +2,7 @@ module Dyph3
   module Support
     class Merger
       attr_reader :result, :current_differ
-      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::OriginalHeckelDiff)
+      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
         merger = Merger.new(left: left, base: base, right: right, current_differ: current_differ)
         merger.execute_three_way_merge
         merger.result

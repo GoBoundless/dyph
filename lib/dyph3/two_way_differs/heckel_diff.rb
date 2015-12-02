@@ -9,7 +9,7 @@ module Dyph3
 
         diff_result = diff(old_text_array, new_text_array)
 
-        # convert to the Resig differ's output to be consistent
+        # convert to typed differ's output (wrapped with change types eg. Add, Delete, Change)
         convert_to_typed_ouput(diff_result, old_text_array, new_text_array)
       end
 
@@ -152,6 +152,15 @@ module Dyph3
 
           { old_text: old_text, new_text: new_text}
         end
+    end
+
+    class TextNode
+      attr_accessor :text, :row
+
+      def initialize(text:, row:)
+        @text = text
+        @row  = row
+      end
     end
 
     class TwoWayChunk

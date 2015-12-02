@@ -173,9 +173,6 @@ module Dyph3
             acc
           end
         end
-        def optional(value)
-          Monads::Optional.new(value)
-        end
     end
   end
 end
