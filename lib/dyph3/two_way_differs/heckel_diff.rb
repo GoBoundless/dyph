@@ -10,12 +10,12 @@ module Dyph3
         diff_result = diff(old_text_array, new_text_array)
 
         # convert to the Resig differ's output to be consistent
-        convert_to_resig_output(diff_result, old_text_array, new_text_array)
+        convert_to_typed_ouput(diff_result, old_text_array, new_text_array)
       end
 
       # Two-way diff based on the algorithm by P. Heckel.
-      # @param [in] text_a Array of lines of first text.
-      # @param [in] text_b Array of lines of second text.
+      # @param [in] left Array of anything implementing hash and equals
+      # @param [in] right Array of anything implementing hash and equals
       # @returns TODO
       def self.diff(left, right)
         differ = HeckelDiff.new(left,right)
@@ -42,65 +42,54 @@ module Dyph3
         ChangeData = Struct.new(:left_change_pos, :right_change_pos, :change_ranges)
 
         def get_differences(change_data, unique_positions)
-          left_uniq_pos, right_uniq_pos = unique_positions
           left_pos, right_pos = change_data.left_change_pos, change_data.right_change_pos
+          left_uniq_pos, right_uniq_pos = unique_positions
 
           if left_uniq_pos < left_pos || right_uniq_pos < right_pos
             change_data
           else
-            left_lo, left_hi, right_lo, right_hi  = find_change_ranges(left_pos, right_pos, left_uniq_pos-1, right_uniq_pos-1)
-            next_left_pos, next_right_pos = find_next_change(left_uniq_pos + 1, right_uniq_pos + 1)
+            left_lo, left_hi, right_lo, right_hi  = find_prev_change(left_pos, right_pos, left_uniq_pos-1, right_uniq_pos-1)
+            next_left_pos, next_right_pos         = find_next_change(left_uniq_pos+1, right_uniq_pos+1)
 
             updated_ranges = append_change_range(change_data.change_ranges, left_lo, left_hi, right_lo, right_hi)
             ChangeData.new(next_left_pos, next_right_pos, updated_ranges)
           end
         end
 
-        def find_change_ranges(left_lo, right_lo, left_hi, right_hi)
-          in_range = left_lo <= left_hi && right_lo <= right_hi
-          unmatched = @left[left_hi] != @right[right_hi]
-          if found_next_change(in_range, unmatched)
-            [left_lo, left_hi, right_lo, right_hi]
-          else
-            find_change_ranges(left_lo, right_lo, left_hi-1, right_hi-1)
-          end
+        def find_next_change(left_start_pos=0, right_start_pos=0)
+          l_arr, r_arr = (@left[left_start_pos..-1] || []), (@right[right_start_pos..-1] || [])
+          offset = mismatch_offset l_arr, r_arr
+          [ left_start_pos + offset, right_start_pos + offset]
         end
 
-        def find_next_change(left_pos=0, right_pos=0)
-          in_range = left_pos < @left.length && right_pos < @right.length
-          unmatched = @left[left_pos] != @right[right_pos]
-          if found_next_change(in_range, unmatched)
-            [left_pos, right_pos]
-          else
-            find_next_change(left_pos+1, right_pos+1)
-          end
+
+        def find_prev_change(left_lo, right_lo, left_hi, right_hi)
+          l_arr, r_arr = (@left[left_lo .. left_hi].reverse || []), (@right[right_lo .. right_hi].reverse || [])
+          offset = mismatch_offset l_arr, r_arr
+          [left_lo, left_hi - offset, right_lo, right_hi - offset]
         end
 
-        def found_next_change(in_range, unmatched)
-          (in_range && unmatched) || !in_range
+        def mismatch_offset(l_arr, r_arr)
+          _ , index  = l_arr.zip(r_arr).each_with_index.detect { |pair, _| pair[0] != pair[1] }
+          index || [l_arr.length, r_arr.length].min
         end
 
         def identify_unique_postions
-          uniq = [[ @left.length, @right.length]]
-          #start building up uniq, the set of lines which appear exactly once in each text
-          freq, ap, bp = [{}, {}, {}]
-          @left.each_with_index do |line, i|
-            freq[line] ||= 0
-            freq[line] += 2                   # add 2 to the freq of line if its in text_a
-            ap[line] = i                    # set ap[line] to the line number
-          end
-          @right.each_with_index do |line, i|
-            freq[line] ||= 0
-            freq[line] += 3                   # add 3 to the freq of line if its in text_b
-            bp[line] = i                    # set bp[line] to the line number
+          # uniq = [[ @left.length, @right.length]]
+          find_uniq = -> (array) do
+            flagged_uniques = array.each_with_index.reduce({}) do |hash, item_index|
+              item, pos = item_index
+              hash[item] = {pos: pos, unique: hash[item].nil?}
+              hash
+            end
+            flagged_uniques.select { |k,v| v[:unique] }.map { |k, v| [k, v[:pos]] }.to_h
           end
 
-          freq.each do |line, x|
-            if x == 5
-              uniq << [ap[line], bp[line]]    # if the line was uniqely in both, push [line index in a, line index in b])
-            end
-          end
-          uniq
+          left_uniques =   find_uniq[@left]
+          right_uniques =  find_uniq[@right]
+          shared_keys = left_uniques.keys & right_uniques.keys
+          uniq_ranges = shared_keys.map { |k| [left_uniques[k], right_uniques[k]] }
+          uniq_ranges.unshift([ @left.length, @right.length])
         end
 
         # given the calculated bounds of the 2 way diff, create the proper change type and add it to the queue.
@@ -115,7 +104,7 @@ module Dyph3
           changes_ranges
         end
 
-        def self.convert_to_resig_output(heckel_diff, old_text_array, new_text_array)
+        def self.convert_to_typed_ouput(heckel_diff, old_text_array, new_text_array)
           chunks = heckel_diff.map { |block| TwoWayChunk.new(block) }
 
           old_index = 0
@@ -163,9 +152,6 @@ module Dyph3
 
           { old_text: old_text, new_text: new_text}
         end
-
-
-
     end
 
     class TwoWayChunk
