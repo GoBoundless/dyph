@@ -14,8 +14,6 @@ describe Dyph3::Differ do
       # [l,l,l], [l,l,b] ... [r,r,r]
       [l,b,r].repeated_combination(3).each do |c1, c2, c3|
         results = set_up[c1, c2, c3]
-        r = results.all?{ |merge_result| merge_result == results[0] }
-        binding.pry unless r
         expect(results.all?{ |merge_result| merge_result == results[0] }).to be true
       end
     }
