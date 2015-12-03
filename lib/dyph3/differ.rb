@@ -4,8 +4,12 @@ module Dyph3
 
     def self.merge_two_way_diff(left_array, right_array, current_differ: Dyph3::TwoWayDiffers::HeckelDiff)
       diff_results = current_differ.execute_diff(left_array, right_array)
-      raw_merge = Dyph3::TwoWayDiffers::OutputConverter.merge_results(diff_results[:old_text], diff_results[:new_text])
+      raw_merge = Dyph3::TwoWayDiffers::OutputConverter.merge_results(diff_results[:old_text], diff_results[:new_text],)
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
+    end
+
+    def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::OriginalHeckelDiff, split_function: ->(x) { x } , join_function: ->(x) { x }, conflict_function: nil)
+      self.merge_text(left, base, right, current_differ: current_differ, split_function: split_function, join_function: join_function, conflict_function: conflict_function)
     end
 
     def self.merge_text(left, base, right, current_differ: Dyph3::TwoWayDiffers::HeckelDiff, split_function: split_on_new_line, join_function: standard_join, conflict_function: nil)

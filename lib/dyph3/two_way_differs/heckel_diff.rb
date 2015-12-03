@@ -75,21 +75,20 @@ module Dyph3
         end
 
         def identify_unique_postions
-          # uniq = [[ @left.length, @right.length]]
-          find_uniq = -> (array) do
-            flagged_uniques = array.each_with_index.reduce({}) do |hash, item_index|
-              item, pos = item_index
-              hash[item] = {pos: pos, unique: hash[item].nil?}
-              hash
-            end
-            flagged_uniques.select { |k,v| v[:unique] }.map { |k, v| [k, v[:pos]] }.to_h
-          end
-
-          left_uniques =   find_uniq[@left]
-          right_uniques =  find_uniq[@right]
+          left_uniques =   find_unique(@left)
+          right_uniques =  find_unique(@right)
           shared_keys = left_uniques.keys & right_uniques.keys
           uniq_ranges = shared_keys.map { |k| [left_uniques[k], right_uniques[k]] }
           uniq_ranges.unshift([ @left.length, @right.length])
+        end
+
+        def find_unique(array)
+          flagged_uniques = array.each_with_index.reduce({}) do |hash, item_index|
+            item, pos = item_index
+            hash[item] = {pos: pos, unique: hash[item].nil?}
+            hash
+          end
+          flagged_uniques.select { |k,v| v[:unique] }.map { |k, v| [k, v[:pos]] }.to_h
         end
 
         # given the calculated bounds of the 2 way diff, create the proper change type and add it to the queue.
