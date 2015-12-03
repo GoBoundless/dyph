@@ -16,7 +16,6 @@ module Dyph3
       # Two-way diff based on the algorithm by P. Heckel.
       # @param [in] left Array of anything implementing hash and equals
       # @param [in] right Array of anything implementing hash and equals
-      # @returns TODO
       def self.diff(left, right)
         differ = HeckelDiff.new(left,right)
         differ.perform_diff
@@ -88,7 +87,7 @@ module Dyph3
             hash[item] = {pos: pos, unique: hash[item].nil?}
             hash
           end
-          flagged_uniques.select { |k,v| v[:unique] }.map { |k, v| [k, v[:pos]] }.to_h
+          flagged_uniques.select { |_, v| v[:unique] }.map { |k, v| [k, v[:pos]] }.to_h
         end
 
         # given the calculated bounds of the 2 way diff, create the proper change type and add it to the queue.
