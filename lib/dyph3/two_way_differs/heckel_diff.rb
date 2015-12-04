@@ -29,7 +29,6 @@ module Dyph3
       def perform_diff
         unique_positions = identify_unique_postions
         unique_positions.sort!{ |a, b| a[0] <=> b[0] }    # sort by the line in which the line was found in a
-
         left_change_pos, right_change_pos = find_next_change
         init_changes = ChangeData.new(left_change_pos, right_change_pos, [])
         final_changes = unique_positions.reduce(init_changes, &method(:get_differences))
@@ -43,7 +42,6 @@ module Dyph3
         def get_differences(change_data, unique_positions)
           left_pos, right_pos = change_data.left_change_pos, change_data.right_change_pos
           left_uniq_pos, right_uniq_pos = unique_positions
-
           if left_uniq_pos < left_pos || right_uniq_pos < right_pos
             change_data
           else
@@ -63,9 +61,13 @@ module Dyph3
 
 
         def find_prev_change(left_lo, right_lo, left_hi, right_hi)
-          l_arr, r_arr = (@left[left_lo .. left_hi].reverse || []), (@right[right_lo .. right_hi].reverse || [])
-          offset = mismatch_offset l_arr, r_arr
-          [left_lo, left_hi - offset, right_lo, right_hi - offset]
+          if left_lo > left_hi || right_lo > right_hi
+            [left_lo, left_hi, right_lo, right_hi]
+          else
+            l_arr, r_arr = (@left[left_lo .. left_hi].reverse || []), (@right[right_lo .. right_hi].reverse || [])
+            offset = mismatch_offset l_arr, r_arr
+            [left_lo, left_hi - offset, right_lo, right_hi - offset]
+          end
         end
 
         def mismatch_offset(l_arr, r_arr)
@@ -79,7 +81,7 @@ module Dyph3
           shared_keys = left_uniques.keys & right_uniques.keys
           uniq_ranges = shared_keys.map { |k| [left_uniques[k], right_uniques[k]] }
           uniq_ranges.unshift([ @left.length, @right.length])
-        end
+        end 
 
         def find_unique(array)
           flagged_uniques = array.each_with_index.reduce({}) do |hash, item_index|
