@@ -22,12 +22,10 @@ module Dyph3
         # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB)
         while d2[:left].length > 0 || d2[:right].length > 0
           r2 = { left: [], right: [] }
-          #warning: this mutates r2 d2
-
           base_lo, base_hi = determine_continual_change_range_in_base(r2, d2)
 
-          left_lo, left_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :left)
-          right_lo, right_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, whose: :right)
+          left_lo, left_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, target: :left)
+          right_lo, right_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, target: :right)
 
 
           change_type = determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
@@ -88,11 +86,10 @@ module Dyph3
         end
 
         def set_targets(d2)
-          #run out of conflicts in :left queue
+          binding.pry
           if d2[:left].empty?
             i_target = :right
           else
-            #run out of conflicts in :right queue
             if d2[:right].empty?
               i_target = :left
             else
@@ -119,16 +116,16 @@ module Dyph3
           end
         end
 
-        def get_hi_lo_ranges(r2, base_lo, base_hi, whose:)
+        def get_hi_lo_ranges(r2, base_lo, base_hi, target:)
           #r2: {:left=>[["c", 2, 2, 2, 2]], :right=>[["a", 3, 2, 3, 3]]}
           #lo:  lo offset
           #hi: j_target's hi
-          #whose: which target we are currently checking
+          #target: which target we are currently checking
           left_lo, left_hi, right_lo, right_hi = [1,2,3,4] #indexes
-          if !r2[whose].empty?
+          if !r2[target].empty?
             [
-              r2[whose].first[right_lo] - r2[whose].first[left_lo] + base_lo,
-              r2[whose].last[right_hi] - r2[whose].last[left_hi] + base_hi
+              r2[target].first[right_lo] - r2[target].first[left_lo] + base_lo,
+              r2[target].last[right_hi] - r2[target].last[left_hi] + base_hi
             ]
           else
             [base_lo, base_hi]

@@ -8,6 +8,8 @@ require "dyph3/outcome/resolved"
 require "dyph3/outcome/conflicted"
 
 require "dyph3/support/diff3"
+require "dyph3/support/diff3_beta"
+
 require "dyph3/support/collater"
 require "dyph3/support/merger"
 require "dyph3/support/sanity_check"

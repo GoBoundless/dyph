@@ -9,7 +9,7 @@ module Dyph3
       end
 
       def execute_three_way_merge
-        d3 = Diff3.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
+        d3 = Diff3Beta.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
         chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
         i2 = 1
         chunk_descs.each do |chunk_desc|
