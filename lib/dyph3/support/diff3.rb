@@ -86,7 +86,6 @@ module Dyph3
         end
 
         def set_targets(d2)
-          binding.pry
           if d2[:left].empty?
             i_target = :right
           else

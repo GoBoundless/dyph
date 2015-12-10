@@ -57,6 +57,16 @@ describe Dyph3::Differ do
         expect(result.success?).to be true
       end
 
+      it "should handle when all three are different" do
+        right =  "bear cat monkey goat".split
+        base =  "ant bear monkey sludge donut pig face uncle note".split
+        left = "ant cat bear dog elephant monkey goat peanut".split
+        #result = Dyph3::Differ.merge_text(left, base, right, split_function: identity , join_function: identity, current_differ: current_differ)
+        m1 = Dyph3::Support::Diff3Beta.execute_diff(left, base, right, current_differ)
+        m2 = Dyph3::Support::Diff3.execute_diff(left, base, right, current_differ)
+        expect(m1).to eq m2
+      end
+
       it "should handle this really complex real-world case" do
         left = [ "common_id_1", "common_h2_open", "left_word_1", "common_word_1", "common_h2_close", "common_id_1_close", "left_id_1", "common_p_open", "common_phrase_1", "left_word_2", "common_word_6", "left_word_3", "common_word_1", "left_word_4", "common_p_close", "left_id_close" ]
         base = [ "common_id_1", "common_h2_open", "left_word_1", "common_word_1", "common_h2_close", "common_id_1_close", "left_id_1", "common_p_open", "common_phrase_1", "left_word_2", "common_word_6", "left_word_3", "common_word_1", "left_word_4", "common_p_close", "left_id_close" ]

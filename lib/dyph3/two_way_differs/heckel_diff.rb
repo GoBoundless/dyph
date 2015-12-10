@@ -81,7 +81,7 @@ module Dyph3
           shared_keys = left_uniques.keys & right_uniques.keys
           uniq_ranges = shared_keys.map { |k| [left_uniques[k], right_uniques[k]] }
           uniq_ranges.unshift([ @left.length, @right.length])
-        end 
+        end
 
         def find_unique(array)
           flagged_uniques = array.each_with_index.reduce({}) do |hash, item_index|
