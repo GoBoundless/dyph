@@ -5,7 +5,7 @@ Gem::Specification.new do |spec|
   spec.name          = "dyph3"
   spec.version       = Dyph3::VERSION
   spec.authors       = ["Kevin Mook", "Andrew Montalto", "Jacob Elder"]
-  spec.email         = ["jacob@boundless.com"]
+  spec.email         = ["opensource@boundless.com"]
   spec.description   = %q{A library of useful diffing algorithms for Ruby}
   spec.summary       = %q{A library of useful diffing algorithms for Ruby}
   spec.homepage      = "https://github.com/GoBoundless/dyph3"
