@@ -19,6 +19,7 @@ module Dyph3
         right_diff = @current_differ.diff(@base, @right).map { |r| Diff2Command.new(*r) }
         collapse_differences(DiffDoubleQueue.new(left_diff, right_diff))
       end
+
       Diff2Command = Struct.new(:code, :base_lo, :base_hi, :side_lo, :side_hi)
 
       private

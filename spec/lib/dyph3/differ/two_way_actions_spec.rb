@@ -9,7 +9,6 @@ describe Dyph3::Differ do
           expect(diff.map(&:class)).to eq [Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange, Dyph3::NoChange]
         end
 
-
         it "should show an add" do
           t1 = "a b c d".split
           t2 = "a b c d e".split

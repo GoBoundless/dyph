@@ -2,20 +2,20 @@ module Dyph3
   module Support
     class Merger
       attr_reader :result, :current_differ
-      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::OriginalHeckelDiff)
+      def self.merge(left, base, right, current_differ: Dyph3::TwoWayDiffers::OriginalHeckelDiff, diff3: Diff3Beta)
         merger = Merger.new(left: left, base: base, right: right, current_differ: current_differ)
-        merger.execute_three_way_merge
+        merger.execute_three_way_merge(Diff3)
         merger.result
       end
 
-      def execute_three_way_merge
-        d3 = Diff3Beta.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
+      def execute_three_way_merge(diff3)
+        d3 = diff3.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
         chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
-        i2 = 1
+        index = 1
         chunk_descs.each do |chunk_desc|
           initial_text = []
 
-          (i2 ... chunk_desc.base_lo).each do |lineno|                  # exclusive (...)
+          (index ... chunk_desc.base_lo).each do |lineno|                  # exclusive (...)
             initial_text << @text3.base[lineno - 1]
           end
 
@@ -23,12 +23,12 @@ module Dyph3
           @result << Dyph3::Outcome::Resolved.new(initial_text) unless initial_text.empty?
 
           interpret_chunk(chunk_desc)
-          #assign i2 to be the line in base after the conflict
-          i2 = chunk_desc.base_hi + 1
+          #assign index to be the line in base after the conflict
+          index = chunk_desc.base_hi + 1
         end
 
         #finish by putting all text after the last conflict into the @result body.
-        ending_text = accumulate_lines(i2, @text3.base.length, @text3.base)
+        ending_text = accumulate_lines(index, @text3.base.length, @text3.base)
         @result << Dyph3::Outcome::Resolved.new(ending_text) unless ending_text.empty?
       end
 
