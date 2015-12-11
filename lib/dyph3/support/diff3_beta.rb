@@ -17,67 +17,69 @@ module Dyph3
         #[[action, base_lo, base_hi, side_lo, side_hi]...]
         left_diff  = @current_differ.diff(@base, @left).map { |r| Diff2Command.new(*r) }
         right_diff = @current_differ.diff(@base, @right).map { |r| Diff2Command.new(*r) }
-        collapse_differences(DiffDoubleStack.new(left_diff, right_diff))
+        collapse_differences(DiffDoubleQueue.new(left_diff, right_diff))
       end
+      Diff2Command = Struct.new(:code, :base_lo, :base_hi, :side_lo, :side_hi)
 
       private
-        Diff2Command = Struct.new(:code, :base_lo, :base_hi, :side_lo, :side_hi)
 
-        def collapse_differences(double_stack, differences=[])
-          if double_stack.finished?
+        def collapse_differences(diffs_queue, differences=[])
+          if diffs_queue.finished?
             differences
           else
-            result_stack   = DiffDoubleStack.new
-            init_side =  double_stack.choose_side!
-            top_diff   =  double_stack.pop
-            result_stack.push(double_stack.current_side, top_diff)
-            double_stack.switch_sides!
+            result_queue   = DiffDoubleQueue.new
+            init_side =  diffs_queue.choose_side!
+            top_diff   =  diffs_queue.dequeue
 
-            command_stacks = build_result_stack(double_stack, top_diff.base_hi, result_stack)
-            differences << determine_differnce(command_stacks, init_side, double_stack.current_side)
-            collapse_differences(double_stack, differences)
+            result_queue.enqueue!(init_side, top_diff)
+
+            diffs_queue.switch_sides!
+            command_queues = build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
+
+            differences << determine_differnce(command_queues, init_side, diffs_queue.switch_sides!)
+            collapse_differences(diffs_queue, differences)
+
           end
         end
 
-        def build_result_stack(double_stack, prev_base_hi, result_stack)
+        def build_result_queue(diffs_queue, prev_base_hi, result_queue)
           #current side can be :left or :right
-          if stack_finished?(double_stack.peek, prev_base_hi)
-            double_stack.switch_sides!
-            result_stack
+          if queue_finished?(diffs_queue.peek, prev_base_hi)
+            result_queue
           else
-            top_diff = double_stack.pop
-            result_stack.push double_stack.current_side, top_diff
+            top_diff = diffs_queue.dequeue
+            result_queue.enqueue!(diffs_queue.current_side, top_diff)
 
             if prev_base_hi < top_diff.base_hi
               #switch the current side and adjust the base_hi
-              double_stack.switch_sides!
-              build_result_stack(double_stack, top_diff.base_hi, result_stack)
+              diffs_queue.switch_sides!
+              build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
             else
-              build_result_stack(double_stack, prev_base_hi, result_stack)
+              build_result_queue(diffs_queue, prev_base_hi, result_queue)
             end
           end
         end
 
-        def stack_finished?(stack, prev_base_hi)
-          stack.empty? || stack.first.base_lo > prev_base_hi + 1
+        def queue_finished?(queue, prev_base_hi)
+          queue.empty? || queue.first.base_lo > prev_base_hi + 1
         end
 
-        def determine_differnce(diff_double_stack, init_side, final_side)
-          base_lo = diff_double_stack.get(init_side).first.base_lo
-          base_hi = diff_double_stack.get(final_side).first.base_hi
+        def determine_differnce(diff_diffs_queue, init_side, final_side)
+          base_lo = diff_diffs_queue.get(init_side).first.base_lo
+          base_hi = diff_diffs_queue.get(final_side).first.base_hi
 
-          left_lo,  left_hi    = diffible_endpoints(diff_double_stack.get(:left), base_lo, base_hi)
-          right_lo, right_hi   = diffible_endpoints(diff_double_stack.get(:right), base_lo, base_hi)
+          left_lo,  left_hi    = diffable_endpoints(diff_diffs_queue.get(:left), base_lo, base_hi)
+          right_lo, right_hi   = diffable_endpoints(diff_diffs_queue.get(:right), base_lo, base_hi)
 
           #the endpoints are offset one, neet to account for that in getting subsets
           left_subset = @left[left_lo-1 .. left_hi]
           right_subset = @right[right_lo-1 .. right_hi]
 
-          change_type = decide_action(diff_double_stack, left_subset, right_subset)
+          change_type = decide_action(diff_diffs_queue, left_subset, right_subset)
           [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
         end
 
-        def diffible_endpoints(command, base_lo, base_hi)
+        def diffable_endpoints(command, base_lo, base_hi)
           if command.any?
             lo = command.first.side_lo - command.first.base_lo +  base_lo
             hi = command.last.side_hi  - command.last.base_hi  + base_hi
@@ -87,11 +89,11 @@ module Dyph3
           end
         end
 
-        def decide_action(diff_double_stack, left_subset, right_subset)
+        def decide_action(diff_diffs_queue, left_subset, right_subset)
           #adjust because the ranges are 1 indexed
-          if diff_double_stack.empty?(:left)
+          if diff_diffs_queue.empty?(:left)
             :choose_right
-          elsif diff_double_stack.empty?(:right)
+          elsif diff_diffs_queue.empty?(:right)
             :choose_left
           else
             if left_subset.zip(right_subset).any? { |x, y| x != y}
@@ -103,13 +105,13 @@ module Dyph3
         end
     end
 
-    class DiffDoubleStack
+    class DiffDoubleQueue
       attr_reader :current_side
       def initialize(left=[], right=[])
         @diffs = { left: left, right: right }
       end
 
-      def pop(side=current_side)
+      def dequeue(side=current_side)
         @diffs[side].shift
       end
 
@@ -121,7 +123,7 @@ module Dyph3
         empty?(:left) && empty?(:right)
       end
 
-      def push(side=current_side, val)
+      def enqueue!(side=current_side, val)
         @diffs[side] << val
       end
 
