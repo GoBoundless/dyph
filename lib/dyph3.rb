@@ -20,7 +20,7 @@ require "dyph3/two_way_differs/original_heckel_diff"
 
 require "dyph3/two_way_differs/output_converter"
 
-require "dyph3/base"
-require "dyph3/add"
-require "dyph3/no_change"
-require "dyph3/delete"
+require "dyph3/action"
+require "dyph3/action/add"
+require "dyph3/action/no_change"
+require "dyph3/action/delete"

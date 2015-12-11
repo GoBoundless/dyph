@@ -18,11 +18,11 @@ module Dyph3
 
           case action
           when :add
-            Dyph3::Add.new(value: line, old_index: old_index, new_index: new_index)
+            Dyph3::Action::Add.new(value: line, old_index: old_index, new_index: new_index)
           when :delete
-            Dyph3::Delete.new(value: line, old_index: old_index, new_index: new_index)
+            Dyph3::Action::Delete.new(value: line, old_index: old_index, new_index: new_index)
           when :no_change
-            Dyph3::NoChange.new(value: line.text, old_index: old_index, new_index: new_index)
+            Dyph3::Action::NoChange.new(value: line.text, old_index: old_index, new_index: new_index)
           else
             raise "unhandled action"
           end

@@ -20,7 +20,7 @@ describe Dyph3::Differ do
       }
 
       it "should not explode" do
-        res = Dyph3::Differ.merge(left, base, right, split_function: text_split, split_function: text_split, join_function: text_join, current_differ: current_differ )
+        res = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, current_differ: current_differ )
         expect(res.joined_results).to eq expected_result
       end
 
