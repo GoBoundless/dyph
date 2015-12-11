@@ -28,41 +28,38 @@ module Dyph3
             differences
           else
             result_stack   = DiffDoubleStack.new
-            init_side = result_stack.initialize_sides double_stack.peek(:left), double_stack.peek(:right)
+            init_side =  double_stack.choose_side!
+            top_diff   =  double_stack.pop
+            result_stack.push(double_stack.current_side, top_diff)
+            double_stack.switch_sides!
 
-            top_diff   =  double_stack.pop(init_side)
-            result_stack.push init_side, top_diff
-
-            command_stacks, final_side = build_result_stack(double_stack, toggle(init_side), top_diff.base_hi, result_stack)
-            differences << determine_differnce(command_stacks, init_side, final_side)
-
+            command_stacks = build_result_stack(double_stack, top_diff.base_hi, result_stack)
+            differences << determine_differnce(command_stacks, init_side, double_stack.current_side)
             collapse_differences(double_stack, differences)
           end
         end
 
-        def build_result_stack(double_stack, current_side, prev_base_hi, result_stack)
+        def build_result_stack(double_stack, prev_base_hi, result_stack)
           #current side can be :left or :right
-          if stack_finished?(double_stack.peek(current_side), prev_base_hi)
-            [result_stack, toggle(current_side)]
+          if stack_finished?(double_stack.peek, prev_base_hi)
+            double_stack.switch_sides!
+            result_stack
           else
-            top_diff = double_stack.pop current_side
-            result_stack.push current_side, top_diff
+            top_diff = double_stack.pop
+            result_stack.push double_stack.current_side, top_diff
 
             if prev_base_hi < top_diff.base_hi
               #switch the current side and adjust the base_hi
-              build_result_stack(double_stack, toggle(current_side), top_diff.base_hi, result_stack)
+              double_stack.switch_sides!
+              build_result_stack(double_stack, top_diff.base_hi, result_stack)
             else
-              build_result_stack(double_stack, current_side, prev_base_hi, result_stack)
+              build_result_stack(double_stack, prev_base_hi, result_stack)
             end
           end
         end
 
         def stack_finished?(stack, prev_base_hi)
           stack.empty? || stack.first.base_lo > prev_base_hi + 1
-        end
-
-        def toggle(side)
-          side == :left ? :right : :left
         end
 
         def determine_differnce(diff_double_stack, init_side, final_side)
@@ -107,15 +104,16 @@ module Dyph3
     end
 
     class DiffDoubleStack
+      attr_reader :current_side
       def initialize(left=[], right=[])
         @diffs = { left: left, right: right }
       end
 
-      def pop(side)
+      def pop(side=current_side)
         @diffs[side].shift
       end
 
-      def peek(side)
+      def peek(side=current_side)
         @diffs[side]
       end
 
@@ -123,28 +121,32 @@ module Dyph3
         empty?(:left) && empty?(:right)
       end
 
-      def push(side, val)
+      def push(side=current_side, val)
         @diffs[side] << val
       end
 
-      def get(side)
+      def get(side=current_side)
         @diffs[side]
       end
 
-      def empty?(side)
+      def empty?(side=current_side)
         @diffs[side].empty?
       end
 
-      def initialize_sides(left, right)
-        @current_side = if left.empty?
+      def switch_sides!(side=current_side)
+        @current_side = side == :left ? :right : :left
+      end
+
+      def choose_side!
+         @current_side = if empty? :left
           :right
-        elsif right.empty?
+        elsif empty? :right
           :left
         else
           #choose the lowest side relative to base
-          left.first.base_lo <= right.first.base_lo ? :left : :right
+          get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
         end
-     end
+      end
     end
 
   end
