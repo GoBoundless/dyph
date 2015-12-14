@@ -35,9 +35,9 @@ module Dyph3
         final_changes.change_ranges
       end
 
-      private
+      ChangeData = Struct.new(:left_change_pos, :right_change_pos, :change_ranges)
 
-        ChangeData = Struct.new(:left_change_pos, :right_change_pos, :change_ranges)
+      private
 
         def get_differences(change_data, unique_positions)
           left_pos, right_pos = change_data.left_change_pos, change_data.right_change_pos

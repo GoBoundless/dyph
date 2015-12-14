@@ -12,6 +12,8 @@ module Dyph3
         convert_to_resig_output(diff_result, old_text_array, new_text_array)
       end
 
+
+      protected
       # Two-way diff based on the algorithm by P. Heckel.
       # @param [in] text_a Array of lines of first text.
       # @param [in] text_b Array of lines of second text.
