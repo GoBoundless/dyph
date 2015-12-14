@@ -10,7 +10,7 @@ module Dyph3
         diff_result = diff(old_text_array, new_text_array)
 
         # convert to typed differ's output (wrapped with change types eg. Add, Delete, Change)
-        convert_to_typed_ouput(diff_result, old_text_array, new_text_array)
+        HeckelDiffWrapper.new(old_text_array, new_text_array, diff_result).convert_to_typed_ouput
       end
 
       # Two-way diff based on the algorithm by P. Heckel.
@@ -103,55 +103,6 @@ module Dyph3
           end
           changes_ranges
         end
-
-        def self.convert_to_typed_ouput(heckel_diff, old_text_array, new_text_array)
-          chunks = heckel_diff.map { |block| TwoWayChunk.new(block) }
-
-          old_index = 0
-          old_text = []
-          new_index = 0
-          new_text = []
-          chunks.each do |chunk|
-            old_iteration = 0
-            while old_index + old_iteration < chunk.left_lo - 1     # chunk indexes are from 1
-              old_text << TextNode.new(text: old_text_array[old_index + old_iteration], row: new_index + old_iteration)
-              old_iteration += 1
-            end
-
-            new_iteration = 0
-            while new_index + new_iteration < chunk.right_lo - 1     # chunk indexes are from 1
-              new_text << TextNode.new(text: new_text_array[new_index + new_iteration], row: old_index + new_iteration)
-              new_iteration += 1
-            end
-
-            old_index += old_iteration
-            new_index += new_iteration
-
-            while old_index <= chunk.left_hi - 1     # chunk indexes are from 1
-              old_text << old_text_array[old_index]
-              old_index += 1
-            end
-
-            while new_index <= chunk.right_hi - 1     # chunk indexes are from 1
-              new_text << new_text_array[new_index]
-              new_index += 1
-            end
-          end
-
-          iteration = 0
-          while old_index + iteration < old_text_array.length
-            old_text << TextNode.new(text: old_text_array[old_index + iteration], row: new_index + iteration)
-            iteration += 1
-          end
-
-          iteration = 0
-          while new_index + iteration < new_text_array.length
-            new_text << TextNode.new(text: new_text_array[new_index + iteration], row: old_index + iteration)
-            iteration += 1
-          end
-
-          { old_text: old_text, new_text: new_text}
-        end
     end
 
     class TextNode
@@ -173,6 +124,69 @@ module Dyph3
         @right_hi = raw_chunk[4]
       end
     end
+    class HeckelDiffWrapper
+      def initialize(old_text_array, new_text_array, heckel_diff)
+        @chunks = heckel_diff.map { |block| TwoWayChunk.new(block) }
+        @old_text_array = old_text_array
+        @new_text_array = new_text_array
+        @old_text = []
+        @new_text = []
+      end
+      IndexTracker = Struct.new(:old_index, :new_index)
 
+      def convert_to_typed_ouput()
+        final_indexes = @chunks.reduce(IndexTracker.new(0,0)) do |index_tracker, chunk|
+          old_iteration, new_iteration = set_text_node_indexes(chunk, index_tracker.old_index, index_tracker.new_index)
+          old_index, new_index = append_changes(chunk, index_tracker.old_index + old_iteration, index_tracker.new_index + new_iteration)
+          IndexTracker.new(old_index, new_index)
+        end
+
+        set_the_remaining_text_node_indexes(final_indexes.old_index, final_indexes.new_index)
+        { old_text: @old_text, new_text: @new_text}
+      end
+
+      private
+        def set_text_node_indexes(chunk, old_index, new_index)
+          old_iteration = 0
+          while old_index + old_iteration < chunk.left_lo - 1     # chunk indexes are from 1
+            @old_text << TextNode.new(text: @old_text_array[old_index + old_iteration], row: new_index + old_iteration)
+            old_iteration += 1
+          end
+
+          new_iteration = 0
+          while new_index + new_iteration < chunk.right_lo - 1     # chunk indexes are from 1
+            @new_text << TextNode.new(text: @new_text_array[new_index + new_iteration], row: old_index + new_iteration)
+            new_iteration += 1
+          end
+          [old_iteration, new_iteration]
+        end
+
+        def append_changes(chunk, old_index, new_index)
+          while old_index <= chunk.left_hi - 1     # chunk indexes are from 1
+            @old_text << @old_text_array[old_index]
+            old_index += 1
+          end
+
+          while new_index <= chunk.right_hi - 1     # chunk indexes are from 1
+            @new_text << @new_text_array[new_index]
+            new_index += 1
+          end
+          [old_index, new_index]
+        end
+
+        def set_the_remaining_text_node_indexes(old_index, new_index)
+          iteration = 0
+          while old_index + iteration < @old_text_array.length
+            @old_text << TextNode.new(text: @old_text_array[old_index + iteration], row: new_index + iteration)
+            iteration += 1
+          end
+
+          iteration = 0
+          while new_index + iteration < @new_text_array.length
+            @new_text << TextNode.new(text: @new_text_array[new_index + iteration], row: old_index + iteration)
+            iteration += 1
+          end
+        end
+    end
   end
 end

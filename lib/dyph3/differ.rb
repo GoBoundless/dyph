@@ -51,16 +51,16 @@ module Dyph3
     def self.split_on_new_line
       -> (some_string) { some_string.split(/(\n)/).each_slice(2).map { |x| x.join } }
     end
-    
+
     # @return helper proc for joining an array
     def self.standard_join
       -> (array) { array.join }
     end
+
     # @return helper proc for identity
     def self.identity
       -> (x) { x }
     end
-
 
     # @return default diff2 class
     def self.default_diff2

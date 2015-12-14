@@ -35,9 +35,9 @@ module Dyph3
             result_queue.enqueue!(init_side, top_diff)
 
             diffs_queue.switch_sides!
-            command_queues = build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
+            build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
 
-            differences << determine_differnce(command_queues, init_side, diffs_queue.switch_sides!)
+            differences << determine_differnce(result_queue, init_side, diffs_queue.switch_sides!)
             collapse_differences(diffs_queue, differences)
 
           end

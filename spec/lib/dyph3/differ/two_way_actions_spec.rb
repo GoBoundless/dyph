@@ -8,7 +8,13 @@ describe Dyph3::Differ do
           diff = Dyph3::Differ.merge_two_way_diff(t1, t1, diff2: diff2)
           expect(diff.map(&:class)).to eq [Dyph3::Action::NoChange, Dyph3::Action::NoChange, Dyph3::Action::NoChange, Dyph3::Action::NoChange]
         end
-
+        # it "should show an add" do
+        #   t1  = %w[ White Grey Pink Red Brown Orange Yellow Cyan Blue Violet Invisible ]
+        #   t2 = %w[ White Grey Pink Invisible Red Brown Orange Yellow Cyan Blue Violet ]
+        #   diff = Dyph3::Differ.merge_two_way_diff(t1, t2, diff2: diff2)
+        #   binding.pry
+        #   #expect(diff.map(&:class)).to eq [Dyph3::Action::NoChange, Dyph3::Action::NoChange, Dyph3::Action::NoChange, Dyph3::Action::NoChange, Dyph3::Action::Add]
+        # end
         it "should show an add" do
           t1 = "a b c d".split
           t2 = "a b c d e".split
