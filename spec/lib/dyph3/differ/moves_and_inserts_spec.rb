@@ -1,9 +1,9 @@
 require 'spec_helper'
 describe Dyph3::Differ do
   let(:identity) { ->(x){ x } }
-  two_way_differs.each do |current_differ|
+  two_way_differs.each do |diff2|
     describe "both moves and inserts" do
-      subject { Dyph3::Differ.merge(left, base, right, current_differ: current_differ) }
+      subject { Dyph3::Differ.merge(left, base, right, diff2: diff2) }
       describe "should handle when base and left match" do
         let(:left)  {"ants bears cat dog".split}
         let(:base)  {"ants bears cat dog".split}

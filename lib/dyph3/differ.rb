@@ -1,11 +1,19 @@
 module Dyph3
   class Differ
-    # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
-    def self.merge(left, base, right,
-      split_function: identity,
-      join_function: identity,
-      conflict_function: nil,
-      current_differ: default_differ,
+    #   The differ works on arrays of objects which implement hash and eq.
+    #   Spit, Join, and Conflict processors can also be defined in the objects
+    #   @param left [Object]
+    #   @param base [Object]
+    #   @param right [Object]
+    #   @params split_function [Proc] Lambda for splitting the objects into Array default is identity
+    #   @params join_function [Proc] Lambda for joining the diffed
+    #   @params conflict_function [Proc] Lambda for handling conflicts. Take a Dyph3::MergeResult as argument
+    #   @params diff2 [Diff3::TwoWayDiffers] Which two way diff class to use
+    #   @params diff3 [Diff3] Which diff3 class to use
+    #   @params use_overrides [Boolean] you can implement the split, join and conflict functions on a lambda in your object, or ignore it up to you really
+    #   @return [Dyph3::MergeResults] The join function is called on each of the results
+    def self.merge(left, base, right, split_function: identity, join_function: identity, conflict_function: identity,
+      diff2: default_diff2,
       diff3: default_diff3,
       use_overrides: true)
 
@@ -19,7 +27,7 @@ module Dyph3
       end
 
       left, base, right = [left, base, right].map { |t| split_function.call(t) }
-      merge_result = Dyph3::Support::Merger.merge(left, base, right, current_differ: current_differ, diff3: diff3 )
+      merge_result = Dyph3::Support::Merger.merge(left, base, right, diff2: diff2, diff3: diff3 )
       collated_merge_results = Dyph3::Support::Collater.collate_merge(merge_result, join_function, conflict_function)
 
       if collated_merge_results.success?
@@ -28,8 +36,13 @@ module Dyph3
       collated_merge_results
     end
 
-    def self.merge_two_way_diff(left_array, right_array, current_differ: default_differ)
-      diff_results = current_differ.execute_diff(left_array, right_array)
+    # If you want to execute a two way diff
+    # @params leff [Array]
+    # @params right [Array]
+    # @params diff2 [Diff3::TwoWayDiffers] Which two way diff class to use
+    # @return [Array] array of Dyph3::Action
+    def self.merge_two_way_diff(left, right, diff2: default_diff2)
+      diff_results = diff2.execute_diff(left, right)
       raw_merge = Dyph3::TwoWayDiffers::OutputConverter.merge_results(diff_results[:old_text], diff_results[:new_text],)
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
     end
@@ -43,16 +56,17 @@ module Dyph3
     end
 
     private
+
       def self.identity
         -> (x) { x }
       end
 
-      def self.default_differ
+      def self.default_diff2
         Dyph3::TwoWayDiffers::OriginalHeckelDiff
       end
 
       def self.default_diff3
-        Dyph3::Support::Diff3Beta
+        Dyph3::Support::Diff3
       end
 
       def self.check_for_class_overrides(klass, split_function, join_function, conflict_function)

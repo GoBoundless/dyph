@@ -5,8 +5,8 @@ describe Dyph3::Differ do
   let(:conflict_function) { ->(xs) { xs.map { |x| x.apply(->(array) {array.join})}} }
   let(:resloved)    { Dyph3::Outcome::Resolved }
   let(:conflicted)  { Dyph3::Outcome::Conflicted }
-  # [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |current_differ|
-  two_way_differs.each do |current_differ|
+  # [Dyph3::TwoWayDiffers::ResigDiff, Dyph3::TwoWayDiffers::HeckelDiff].each do |diff2|
+  two_way_differs.each do |diff2|
     describe "testing multiple types of conflicts" do
       subject { Dyph3::Differ.merge(left, base, right, join_function: Dyph3::Differ.standard_join, split_function: Dyph3::Differ.split_on_new_line, conflict_function: conflict_function ) }
 

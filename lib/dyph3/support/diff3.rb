@@ -9,12 +9,12 @@ module Dyph3
       #   @returns Array of tuples containing diff results. The tuples consist of
       #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
       #        :choose_left, :choose_right, :no_conflict_found, or :possible_conflict.
-      def execute_diff(left, base, right, current_differ)
+      def execute_diff(left, base, right, diff2)
 
         # diff result => [(cmd, loA, hiA, loB, hiB), ..]
         d2 = {
-          left: current_differ.diff(base, left), # queue of conflicts with left
-          right: current_differ.diff(base, right) # queue of conflicts with right
+          left: diff2.diff(base, left), # queue of conflicts with left
+          right: diff2.diff(base, right) # queue of conflicts with right
         }
 
         result_diff3 = []

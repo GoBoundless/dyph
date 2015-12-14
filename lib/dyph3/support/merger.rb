@@ -1,15 +1,15 @@
 module Dyph3
   module Support
     class Merger
-      attr_reader :result, :current_differ
-      def self.merge(left, base, right, current_differ: TwoWayDiffers::OriginalHeckelDiff, diff3: Diff3Beta)
-        merger = Merger.new(left: left, base: base, right: right, current_differ: current_differ)
+      attr_reader :result, :diff2
+      def self.merge(left, base, right, diff2: Dyph3::TwoWayDiffers::OriginalHeckelDiff, diff3: Diff3Beta)
+        merger = Merger.new(left: left, base: base, right: right, diff2: diff2)
         merger.execute_three_way_merge(Diff3)
         merger.result
       end
 
       def execute_three_way_merge(diff3)
-        d3 = diff3.execute_diff(@text3.left, @text3.base, @text3.right, @current_differ)
+        d3 = diff3.execute_diff(@text3.left, @text3.base, @text3.right, @diff2)
         chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
         index = 1
         chunk_descs.each do |chunk_desc|
@@ -20,7 +20,7 @@ module Dyph3
           end
 
           #initial_text = initial_text.join("\n") + "\n"
-          @result << Outcome::Resolved.new(initial_text) unless initial_text.empty?
+          @result << Dyph3::Outcome::Resolved.new(initial_text) unless initial_text.empty?
 
           interpret_chunk(chunk_desc)
           #assign index to be the line in base after the conflict
@@ -29,19 +29,19 @@ module Dyph3
 
         #finish by putting all text after the last conflict into the @result body.
         ending_text = accumulate_lines(index, @text3.base.length, @text3.base)
-        @result << Outcome::Resolved.new(ending_text) unless ending_text.empty?
+        @result << Dyph3::Outcome::Resolved.new(ending_text) unless ending_text.empty?
       end
 
       protected
 
-        def initialize(left:, base:, right:, current_differ:)
+        def initialize(left:, base:, right:, diff2:)
           @result = []
-          @current_differ = current_differ
+          @diff2 = diff2
           @text3 = Text3.new(left: left, right: right, base: base)
         end
 
         def set_conflict(chunk_desc)
-          conflict = Outcome::Conflicted.new(
+          conflict = Dyph3::Outcome::Conflicted.new(
             left:   accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, @text3.left),
             base:   accumulate_lines(chunk_desc.base_lo, chunk_desc.base_hi, @text3.base),
             right:  accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, @text3.right)
@@ -54,7 +54,7 @@ module Dyph3
           d.each do |raw_chunk_desc|
             chunk_desc = ChunkDesc.new(raw_chunk_desc)
             (ia ... chunk_desc.left_lo).each do |lineno|
-              @result << Outcome::Resolved.new(accumulate_lines(ia, lineno, text_a))
+              @result <<  Dyph3::Outcome::Resolved.new(accumulate_lines(ia, lineno, text_a))
             end
 
             outcome = if chunk_desc.action == :change
@@ -73,7 +73,7 @@ module Dyph3
           end
 
           final_text = accumulate_lines(ia, text_a.length + 1, text_a)
-          @result << Outcome::Resolved.new(final_text) unless final_text.empty?
+          @result <<  Dyph3::Outcome::Resolved.new(final_text) unless final_text.empty?
         end
 
         def set_text(orig_text, lo, hi)
@@ -88,7 +88,7 @@ module Dyph3
           text_a = set_text(@text3.right, chunk_desc.right_lo,  chunk_desc.right_hi)
           text_b = set_text(@text3.left , chunk_desc.left_lo,   chunk_desc.left_hi)
 
-          d = @current_differ.diff(text_a, text_b)
+          d = @diff2.diff(text_a, text_b)
 
           if (_assoc_range(d, :change) || _assoc_range(d, :delete)) && chunk_desc.base_lo <= chunk_desc.base_hi
             set_conflict(chunk_desc)
@@ -102,11 +102,11 @@ module Dyph3
             # 0 flag means choose left.  put lines chunk_desc[1] .. chunk_desc[2] into the @result body.
             temp_text = accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, @text3.left)
             # they deleted it, don't use if its only a new line
-            @result <<  Outcome::Resolved.new(temp_text) unless temp_text.empty?
+            @result <<  Dyph3::Outcome::Resolved.new(temp_text) unless temp_text.empty?
           elsif chunk_desc.action != :possible_conflict
             # A flag means choose right.  put lines chunk_desc[3] to chunk_desc[4] into the @result body.
             temp_text = accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, @text3.right)
-            @result << Outcome::Resolved.new(temp_text)
+            @result << Dyph3::Outcome::Resolved.new(temp_text)
           else
             _conflict_range(chunk_desc)
           end

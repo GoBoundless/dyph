@@ -2,21 +2,21 @@ module Dyph3
   module Support
 
     class Diff3Beta
-      def self.execute_diff(left, base, right, current_differ)
-        Diff3Beta.new(left, base, right, current_differ).get_differences
+      def self.execute_diff(left, base, right, diff2)
+        Diff3Beta.new(left, base, right, diff2).get_differences
       end
 
-      def initialize(left, base, right, current_differ)
+      def initialize(left, base, right, diff2)
         @left   = left
         @right  = right
         @base   = base
-        @current_differ = current_differ
+        @diff2 = diff2
       end
 
       def get_differences
         #[[action, base_lo, base_hi, side_lo, side_hi]...]
-        left_diff  = @current_differ.diff(@base, @left).map { |r| Diff2Command.new(*r) }
-        right_diff = @current_differ.diff(@base, @right).map { |r| Diff2Command.new(*r) }
+        left_diff  = @diff2.diff(@base, @left).map { |r| Diff2Command.new(*r) }
+        right_diff = @diff2.diff(@base, @right).map { |r| Diff2Command.new(*r) }
         collapse_differences(DiffDoubleQueue.new(left_diff, right_diff))
       end
 

@@ -5,8 +5,8 @@ describe Dyph3::Differ do
   let(:differs) { two_way_differs }
   let(:run_all_diffs) do
     -> (l,b,r) {
-      differs.map do |current_differ|
-        Dyph3::Differ.merge(l, b, r, current_differ: current_differ).joined_results
+      differs.map do |diff2|
+        Dyph3::Differ.merge(l, b, r, diff2: diff2).joined_results
       end
     }
   end

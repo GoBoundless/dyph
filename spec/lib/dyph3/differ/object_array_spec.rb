@@ -1,13 +1,13 @@
 require 'spec_helper'
 describe Dyph3::Differ do
-  two_way_differs.each do |current_differ|
+  two_way_differs.each do |diff2|
     describe "test split  " do
       let(:base) { [:a, :b, :c] }
       let(:left) { [:a, :b, :c] }
       let(:right) { [:a, :v, :c] }
 
       let(:merged_array) do
-         Dyph3::Differ.merge(left, base, right, current_differ: current_differ )
+         Dyph3::Differ.merge(left, base, right, diff2: diff2 )
       end
 
       it "should have merged successuffly" do
@@ -21,7 +21,7 @@ describe Dyph3::Differ do
       let(:right) { Fish.new(:pollock) }
 
       let(:merged_array) do
-        Dyph3::Differ.merge(left, base, right, current_differ: current_differ )
+        Dyph3::Differ.merge(left, base, right, diff2: diff2 )
       end
 
       it "should have merged successfully" do
@@ -35,7 +35,7 @@ describe Dyph3::Differ do
       let(:right) { Fish.new(:pollock) }
 
       let!(:merged_array) do
-        Dyph3::Differ.merge(left, base, right, current_differ: current_differ )
+        Dyph3::Differ.merge(left, base, right, diff2: diff2 )
       end
 
       it "should have merged successfully" do
