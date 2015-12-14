@@ -2,14 +2,21 @@ module Dyph3
   module Support
     class Merger
       attr_reader :result, :diff2
-      def self.merge(left, base, right, diff2: Dyph3::TwoWayDiffers::OriginalHeckelDiff, diff3: Diff3Beta)
-        merger = Merger.new(left: left, base: base, right: right, diff2: diff2)
-        merger.execute_three_way_merge(Diff3)
+      def self.merge(left, base, right, diff2: Dyph3::Differ.default_diff2, diff3: Dyph3::Differ.default_diff3)
+        merger = Merger.new(left: left, base: base, right: right, diff2: diff2, diff3: diff3)
+        merger.execute_three_way_merge()
         merger.result
       end
 
-      def execute_three_way_merge(diff3)
-        d3 = diff3.execute_diff(@text3.left, @text3.base, @text3.right, @diff2)
+      def initialize(left:, base:, right:, diff2:, diff3:)
+        @result = []
+        @diff2 = diff2
+        @diff3 = diff3
+        @text3 = Text3.new(left: left, right: right, base: base)
+      end
+
+      def execute_three_way_merge()
+        d3 = @diff3.execute_diff(@text3.left, @text3.base, @text3.right, @diff2)
         chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
         index = 1
         chunk_descs.each do |chunk_desc|
@@ -32,14 +39,10 @@ module Dyph3
         @result << Dyph3::Outcome::Resolved.new(ending_text) unless ending_text.empty?
       end
 
+
+
+
       protected
-
-        def initialize(left:, base:, right:, diff2:)
-          @result = []
-          @diff2 = diff2
-          @text3 = Text3.new(left: left, right: right, base: base)
-        end
-
         def set_conflict(chunk_desc)
           conflict = Dyph3::Outcome::Conflicted.new(
             left:   accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, @text3.left),

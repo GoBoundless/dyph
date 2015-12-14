@@ -141,7 +141,7 @@ module Dyph3
       end
 
       def choose_side!
-         @current_side = if empty? :left
+        @current_side = if empty? :left
           :right
         elsif empty? :right
           :left

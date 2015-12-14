@@ -47,27 +47,32 @@ module Dyph3
       Dyph3::TwoWayDiffers::OutputConverter.objectify(raw_merge)
     end
 
+    # @return helper proc for keeping new lines on string
     def self.split_on_new_line
       -> (some_string) { some_string.split(/(\n)/).each_slice(2).map { |x| x.join } }
     end
-
+    
+    # @return helper proc for joining an array
     def self.standard_join
       -> (array) { array.join }
     end
+    # @return helper proc for identity
+    def self.identity
+      -> (x) { x }
+    end
 
+
+    # @return default diff2 class
+    def self.default_diff2
+      Dyph3::TwoWayDiffers::OriginalHeckelDiff
+    end
+    # @return default diff3 class
+    def self.default_diff3
+      Dyph3::Support::Diff3
+    end
+
+    
     private
-
-      def self.identity
-        -> (x) { x }
-      end
-
-      def self.default_diff2
-        Dyph3::TwoWayDiffers::OriginalHeckelDiff
-      end
-
-      def self.default_diff3
-        Dyph3::Support::Diff3
-      end
 
       def self.check_for_class_overrides(klass, split_function, join_function, conflict_function)
         if klass.constants.include?(:DIFF_PREPROCESSOR)
