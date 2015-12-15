@@ -29,17 +29,16 @@ module Dyph3
             differences
           else
             result_queue   = DiffDoubleQueue.new
-            init_side =  diffs_queue.choose_side!
+            init_side =  diffs_queue.choose_side
             top_diff   =  diffs_queue.dequeue
 
-            result_queue.enqueue!(init_side, top_diff)
+            result_queue.enqueue(init_side, top_diff)
 
-            diffs_queue.switch_sides!
+            diffs_queue.switch_sides
             build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
 
-            differences << determine_differnce(result_queue, init_side, diffs_queue.switch_sides!)
+            differences << determine_differnce(result_queue, init_side, diffs_queue.switch_sides)
             collapse_differences(diffs_queue, differences)
-
           end
         end
 
@@ -49,11 +48,11 @@ module Dyph3
             result_queue
           else
             top_diff = diffs_queue.dequeue
-            result_queue.enqueue!(diffs_queue.current_side, top_diff)
+            result_queue.enqueue(diffs_queue.current_side, top_diff)
 
             if prev_base_hi < top_diff.base_hi
               #switch the current side and adjust the base_hi
-              diffs_queue.switch_sides!
+              diffs_queue.switch_sides
               build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
             else
               build_result_queue(diffs_queue, prev_base_hi, result_queue)
@@ -124,7 +123,7 @@ module Dyph3
         empty?(:left) && empty?(:right)
       end
 
-      def enqueue!(side=current_side, val)
+      def enqueue(side=current_side, val)
         @diffs[side] << val
       end
 
@@ -136,11 +135,11 @@ module Dyph3
         @diffs[side].empty?
       end
 
-      def switch_sides!(side=current_side)
+      def switch_sides(side=current_side)
         @current_side = side == :left ? :right : :left
       end
 
-      def choose_side!
+      def choose_side
         @current_side = if empty? :left
           :right
         elsif empty? :right

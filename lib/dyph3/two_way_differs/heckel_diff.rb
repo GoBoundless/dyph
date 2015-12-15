@@ -6,9 +6,7 @@ module Dyph3
 
       def self.execute_diff(old_text_array, new_text_array)
         raise ArgumentError, "Argument is not an array." unless old_text_array.is_a?(Array) && new_text_array.is_a?(Array)
-
         diff_result = diff(old_text_array, new_text_array)
-
         # convert to typed differ's output (wrapped with change types eg. Add, Delete, Change)
         HeckelDiffWrapper.new(old_text_array, new_text_array, diff_result).convert_to_typed_ouput
       end
