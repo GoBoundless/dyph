@@ -71,24 +71,21 @@ module Dyph3
       Dyph3::Support::Diff3
     end
 
-    
-    private
-
-      def self.check_for_class_overrides(klass, split_function, join_function, conflict_function)
-        if klass.constants.include?(:DIFF_PREPROCESSOR)
-          split_function = klass::DIFF_PREPROCESSOR
-        end
-
-        if klass.constants.include?(:DIFF_POSTPROCESSOR)
-          join_function  = klass::DIFF_POSTPROCESSOR
-        end
-
-        if klass.constants.include?(:DIFF_CONFLICT_PROCESSOR)
-          conflict_function = klass::DIFF_CONFLICT_PROCESSOR
-        end
-
-        [split_function, join_function, conflict_function]
+    def self.check_for_class_overrides(klass, split_function, join_function, conflict_function)
+      if klass.constants.include?(:DIFF_PREPROCESSOR)
+        split_function = klass::DIFF_PREPROCESSOR
       end
+
+      if klass.constants.include?(:DIFF_POSTPROCESSOR)
+        join_function  = klass::DIFF_POSTPROCESSOR
+      end
+
+      if klass.constants.include?(:DIFF_CONFLICT_PROCESSOR)
+        conflict_function = klass::DIFF_CONFLICT_PROCESSOR
+      end
+
+      [split_function, join_function, conflict_function]
+    end
 
   end
 end

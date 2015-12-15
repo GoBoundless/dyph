@@ -141,13 +141,13 @@ module Dyph3
 
       def choose_side
         @current_side = if empty? :left
-          :right
-        elsif empty? :right
-          :left
-        else
-          #choose the lowest side relative to base
-          get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
-        end
+                          :right
+                        elsif empty? :right
+                          :left
+                        else
+                          #choose the lowest side relative to base
+                          get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
+                        end
       end
     end
 
