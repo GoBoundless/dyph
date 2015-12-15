@@ -1,14 +1,6 @@
 module Animal
-  def ==(other)
-    other.class == self.class &&
-    other.type == self.type
-  end
-
-  alias_method :eql?, :==
-
-  def hash
-    type.hash
-  end
+  include Dyph3::Equatable
+  equate_with :type
 end
 
 class Fish
