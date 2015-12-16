@@ -77,13 +77,28 @@ returns the following `MergeResult#result`
 and has `MergeResult#conflict` set to `true`
 
 ## Split, Join, and Conflict functions
-Dyph3 works on arrays of objects that implement equatable and hash (see Dyph3::Equatable). For various reasons one might want to delegate the splitting and joining of the input/out to Dyph3. (i.e. so one would not have to `map` over the input and output to do the transformation)
+Dyph3 works on arrays of objects that implement equatable and hash (see `Dyph3::Equatable`). For various reasons one might want to delegate the splitting and joining of the input/out to Dyph3. (i.e. so one would not have to `map` over the input and output to do the transformation)
 
 ### With merge parameter `lambdas`
+One can define `split_funciton`, `join_function`, and `conflict_function` to `Dyph3::Diff.merge` such as splitting on word boundries, (but keeping delimiters):
 
+    split_function =  ->(string) { string.split(/\b/) }
 
+and then a join function to handle the resulting arrays
 
+    join_function =  ->(array) { array.join }
 
+which may be invoked with
+
+    left  = "The quick brown fox left the lazy dog"
+    base  = "The quick brown fox jumped over the lazy dog."
+    right = "The right brown fox jumped over the lazy dog"
+    merge_results = Dyph3::Differ.merge(left, base, right, split_function: split_function, join_function: join_function)
+    merge_results.joined_results
+
+will then return
+
+    "The right brown fox left the lazy dog"
 ### By class level preprocessors
 ### Custom Conflict handlers
 
