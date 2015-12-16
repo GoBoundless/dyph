@@ -6,7 +6,7 @@ module Dyph3
       #   @param [in] left    Array of lines of left text.
       #   @param [in] base    Array of lines of base text.
       #   @param [in] right   Array of lines of right text.
-      #   @returns Array of tuples containing diff results. The tuples consist of
+      #   @return Array of tuples containing diff results. The tuples consist of
       #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
       #        :choose_left, :choose_right, :no_conflict_found, or :possible_conflict.
       def execute_diff(left, base, right, diff2)
@@ -23,13 +23,12 @@ module Dyph3
         while d2[:left].length > 0 || d2[:right].length > 0
           r2 = { left: [], right: [] }
           base_lo, base_hi = determine_continual_change_range_in_base(r2, d2)
-
+#          puts "orig base_lo #{base_lo} base_hi #{base_hi}"
           left_lo, left_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, target: :left)
           right_lo, right_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, target: :right)
 
 
           change_type = determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
-
           result_diff3 << [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
         end
 
@@ -75,7 +74,6 @@ module Dyph3
               (i0, i1) = [left_lo + d - 1, right_lo + d - 1]
               ok0 = (0 <= i0 && i0 < left.length)
               ok1 = (0 <= i1 && i1 < right.length)
-
               if (ok0 ^ ok1) || (ok0 && left[i0] != right[i1])
                 cmd = :possible_conflict
                 break

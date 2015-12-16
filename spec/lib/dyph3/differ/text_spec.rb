@@ -5,7 +5,7 @@ describe Dyph3::Differ do
   let(:text_split) { Dyph3::Differ.split_on_new_line }
   let(:text_join)  { Dyph3::Differ.standard_join }
 
-  two_way_differs.each do |diff2|
+  two_way_differs.product(three_way_differs).each do |diff2, diff3|
     describe "merging text" do
       let(:base) { "This is the baseline.\nThe start.\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
       let(:left) { "This is the baseline.\nThe start (changed by A).\nThe end.\ncats\ndogs\npigs\ncows\nchickens"}
@@ -20,22 +20,22 @@ describe Dyph3::Differ do
       }
 
       it "should not explode" do
-        res = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2 )
+        res = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3 )
         expect(res.joined_results).to eq expected_result
       end
 
       it "should not be conflicted when not conflicted" do
-        result = Dyph3::Differ.merge(left, base, left, split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge(left, base, left, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq left
       end
 
       it "should not be conflicted with the same text" do
-        result = Dyph3::Differ.merge(left, left, left, split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge(left, left, left, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq left
       end
 
       it "should not be conflicted when not conflicted" do
-        result = Dyph3::Differ.merge(base, base, base, split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge(base, base, base, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq base
       end
 
@@ -45,7 +45,7 @@ describe Dyph3::Differ do
         base = "Article title"
         right = "Article title"
 
-        result = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq left
       end
 
@@ -54,12 +54,12 @@ describe Dyph3::Differ do
         base = "Article title"
         right = "Article title"
 
-        result = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge(left, base, right, split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq left
       end
 
       it "should handle empty strings" do
-        result = Dyph3::Differ.merge("", "", "", split_function: text_split, join_function: text_join, diff2: diff2)
+        result = Dyph3::Differ.merge("", "", "", split_function: text_split, join_function: text_join, diff2: diff2, diff3: diff3)
         expect(result.joined_results).to eq ""
       end
 

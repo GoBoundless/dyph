@@ -1,9 +1,32 @@
 require 'spec_helper'
 describe Dyph3::Differ do
   let(:identity) { ->(x){ x } }
-  two_way_differs.each do |diff2|
+  two_way_differs.product(three_way_differs).each do |diff2, diff3|
     describe "both moves and inserts" do
-      subject { Dyph3::Differ.merge(left, base, right, diff2: diff2) }
+      subject { Dyph3::Differ.merge(left, base, right, diff2: diff2, diff3: diff3)}
+      describe "shuffle text around" do
+        let(:joined_result) {
+          [
+            Dyph3::Outcome::Conflicted.new(base:[], left:[:c, :b], right: [:e]),
+            Dyph3::Outcome::Resolved.new([:a]),
+            Dyph3::Outcome::Conflicted.new(base: [:b, :c, :d, :e], left:[:d, :e], right: [:c, :d, :b])
+          ]
+        }
+        let(:left)  {[:c, :b, :a, :d, :e]}
+        let(:base)  {[:a, :b, :c, :d, :e]}
+        let(:right) {[:e, :a, :c, :d, :b]}
+
+        it { expect(subject.joined_results).to eq joined_result }
+      end
+
+      describe "should handle when base and left match" do
+        let(:left)  { [:a, :b, :c, :d] }
+        let(:base)  { [:a, :b, :c] }
+        let(:right) { [:b, :c, :d, :e] }
+        it { binding.pry; expect(subject.joined_results).to eq right}
+        it { expect(subject.success?).to be true}
+      end
+
       describe "should handle when base and left match" do
         let(:left)  {"ants bears cat dog".split}
         let(:base)  {"ants bears cat dog".split}

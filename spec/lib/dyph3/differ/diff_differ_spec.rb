@@ -2,11 +2,10 @@ require 'spec_helper'
 
 describe Dyph3::Differ do
 
-  let(:differs) { two_way_differs }
   let(:run_all_diffs) do
     -> (l,b,r) {
-      differs.map do |diff2|
-        Dyph3::Differ.merge(l, b, r, diff2: diff2).joined_results
+      two_way_differs.product(three_way_differs).map do |diff2, diff3|
+        Dyph3::Differ.merge(l, b, r, diff2: diff2, diff3: diff3).joined_results
       end
     }
   end
@@ -15,6 +14,7 @@ describe Dyph3::Differ do
       # [l,l,l], [l,l,b] ... [r,r,r]
       [l,b,r].repeated_combination(3).each do |c1, c2, c3|
         results = run_all_diffs[c1, c2, c3]
+        binding.pry unless results.all?{ |merge_result| merge_result == results[0] }
         expect(results.all?{ |merge_result| merge_result == results[0] }).to be true
       end
     }
@@ -31,7 +31,7 @@ describe Dyph3::Differ do
   end
 
   context "shuffled changes" do
-    (1..50).each do |i|
+    (1..100).each do |i|
       let(:ps) { Faker::Lorem.paragraphs(20)}
       let(:s1) { ps.shuffle }
       let(:s2) { ps.shuffle }

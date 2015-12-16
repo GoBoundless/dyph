@@ -10,8 +10,13 @@ require 'faker'
 
 Dir[File.dirname(__FILE__) + '/fixtures/*.rb'].each {|file| require file }
 
+def three_way_differs
+  [Dyph3::Support::Diff3, Dyph3::Support::Diff3Beta]
+end
+
+
 def two_way_differs
-  [Dyph3::TwoWayDiffers::HeckelDiff, Dyph3::TwoWayDiffers::OriginalHeckelDiff]
+  [Dyph3::TwoWayDiffers::OriginalHeckelDiff, Dyph3::TwoWayDiffers::HeckelDiff]
 end
 
 RSpec.configure do |config|

@@ -66,15 +66,14 @@ module Dyph3
 
         def determine_differnce(diff_diffs_queue, init_side, final_side)
           base_lo = diff_diffs_queue.get(init_side).first.base_lo
-          base_hi = diff_diffs_queue.get(final_side).first.base_hi
-
+          base_hi = diff_diffs_queue.get(final_side).last.base_hi
+#          puts "Beta base_lo #{base_lo} base_hi #{base_hi}"
           left_lo,  left_hi    = diffable_endpoints(diff_diffs_queue.get(:left), base_lo, base_hi)
           right_lo, right_hi   = diffable_endpoints(diff_diffs_queue.get(:right), base_lo, base_hi)
 
           #the endpoints are offset one, neet to account for that in getting subsets
           left_subset = @left[left_lo-1 .. left_hi]
           right_subset = @right[right_lo-1 .. right_hi]
-
           change_type = decide_action(diff_diffs_queue, left_subset, right_subset)
           [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
         end
@@ -91,12 +90,13 @@ module Dyph3
 
         def decide_action(diff_diffs_queue, left_subset, right_subset)
           #adjust because the ranges are 1 indexed
+
           if diff_diffs_queue.empty?(:left)
             :choose_right
           elsif diff_diffs_queue.empty?(:right)
             :choose_left
           else
-            if left_subset.zip(right_subset).any? { |x, y| x != y}
+            if left_subset != right_subset
               :possible_conflict
             else
               :no_conflict_found
@@ -140,14 +140,14 @@ module Dyph3
       end
 
       def choose_side
-        @current_side = if empty? :left
-                          :right
-                        elsif empty? :right
-                          :left
-                        else
-                          #choose the lowest side relative to base
-                          get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
-                        end
+        if empty? :left
+          @current_side = :right
+        elsif empty? :right
+          @current_side = :left
+        else
+          #choose the lowest side relative to base
+          @current_side = get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
+        end
       end
     end
 
