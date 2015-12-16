@@ -23,7 +23,7 @@ describe Dyph3::Differ do
         let(:left)  { [:a, :b, :c, :d] }
         let(:base)  { [:a, :b, :c] }
         let(:right) { [:b, :c, :d, :e] }
-        it { binding.pry; expect(subject.joined_results).to eq right}
+        it { expect(subject.joined_results).to eq right}
         it { expect(subject.success?).to be true}
       end
 

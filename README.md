@@ -29,7 +29,7 @@ To diff two arrays:
     right = [:b, :c, :d, :e]
     Dyph3::Differ.two_way_diff(left, right)
 
-which will return an array of Dyph3::Action with offsets
+which will return an array of `Dyph3::Action` with offsets
 
     [
       Action::Delete.new(new_index: 0, old_index: 1, value: :a),
@@ -54,9 +54,10 @@ Which returns a Dyph3::MergeResult with a list of result outcomes:
 
     [ OutCome::Resolved.new(result: [:b, :c, :d, :e] ]
 
+and has `MergeResult#conflict` set to `false`
 ### Conflicts
 
-Conflicts are when left and right make a change relative to base in the same place, so an end user must determine how to merge
+Conflicts are when left and right make a change relative to base in the same relative place, so an end user must determine how to merge
 
 For example:
 
@@ -65,7 +66,7 @@ For example:
     right = [:a, :r, :c]
     Dyph3::Differ.merge(left, base, right)
 
-returns the following MergeResult#result
+returns the following `MergeResult#result`
 
     [
       Outcome::Resolved.new(result: [:a]),
@@ -73,4 +74,16 @@ returns the following MergeResult#result
       Outcome::Resolved.new(result: [:c])
     ]
 
-and has a `MergeResult#conflict` marker set to `true`
+and has `MergeResult#conflict` set to `true`
+
+## Split, Join, and Conflict functions
+Dyph3 works on arrays of objects that implement equatable and hash (see Dyph3::Equatable). For various reasons one might want to delegate the splitting and joining of the input/out to Dyph3. (i.e. so one would not have to `map` over the input and output to do the transformation)
+
+### With merge parameter `lambdas`
+
+
+
+
+### By class level preprocessors
+### Custom Conflict handlers
+
