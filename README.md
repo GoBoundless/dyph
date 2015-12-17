@@ -32,11 +32,11 @@ To diff two arrays:
 which will return an array of `Dyph3::Action` with offsets
 
     [
-      Action::Delete.new(new_index: 0, old_index: 1, value: :a),
-      Action::NoChange.new(new_index: 0, old_index: 1, value: :b),
-      Action::NoChange.new(new_index: 1, old_index: 2, value: :c),
-      Action::NoChange.new(new_index: 2, old_index: 3, value: :d),
-      Action::Add.new(new_index: 4, old_index: 4, value: :e)
+      <Action::Delete   @new_index=0, @old_index=1, @value=:a>,
+      <Action::NoChange @new_index=0, @old_index=1, @value=:b>,
+      <Action::NoChange @new_index=1, @old_index=2, @value=:c>,
+      <Action::NoChange @new_index=2, @old_index=3, @value=:d>,
+      <Action::Add      @new_index=4, @old_index=4, @value=:e>
     ]
 
 ## Three way diffing
@@ -52,7 +52,7 @@ To execute a three way diff and merge:
 
 Which returns a `Dyph3::MergeResult` with a list of result outcomes:
 
-    [ OutCome::Resolved.new(result: [:b, :c, :d, :e] ]
+    [ <OutCome::Resolved(@result=[:b, :c, :d, :e]> ]
 
 and has `MergeResult#conflict` set to `false`
 ### Conflicts
@@ -69,9 +69,9 @@ For example:
 returns the following `MergeResult#result`
 
     [
-      Outcome::Resolved.new(result: [:a]),
-      Outcome::Conflicted.new(base: [:b], left: [:l], right: [:r]),
-      Outcome::Resolved.new(result: [:c])
+      <Outcome::Resolved   @result=[:a]>
+      <Outcome::Conflicted @base=[:b], @left=[:l], @right=[:r]>,
+      <Outcome::Resolved   @result=[:c]>
     ]
 
 and has `MergeResult#conflict` set to `true`
@@ -145,6 +145,7 @@ When there are no conflictes:
     base = GreetingCard.new("Merry Christmas!")
     right = GreetingCard.new("Merry Christmas! And a Happy New Year")
     Dyph3::Differ.merge(left, base, right).joined_results
+
     => "Ho! Ho! Ho! Merry Christmas! And a Happy New Year"
 
 and when there are:
@@ -153,6 +154,7 @@ and when there are:
     base = GreetingCard.new("Merry Christmas!")
     right = GreetingCard.new("Just Christmas!")
     Dyph3::Differ.merge(left, base, right).joined_results
+
     => "<span class='conflict_left'>Happy</span><span class='conflict_base'>Merry</span><span class='conflict_right'>Just</span> Christmas!"
 
 
