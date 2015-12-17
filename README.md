@@ -95,10 +95,87 @@ which may be invoked with
     right = "The right brown fox jumped over the lazy dog"
     merge_results = Dyph3::Differ.merge(left, base, right, split_function: split_function, join_function: join_function)
     merge_results.joined_results
-
 will then return
 
     "The right brown fox left the lazy dog"
-### By class level preprocessors
-### Custom Conflict handlers
+### Conflict Handlers
+Similarly one can instruct the differ on how to deal with conflicts should they come up. The conflict_function sole argument the list of Outcomes from the diff
+
+    conflict_funciton = ->(outcome_list) { ... }
+
+which you can then pass to the Differ#merge method as the `conflict_function`
+### Class Level Processors
+In addion to argument level split, join, merge function, Dyph3 also supports object level class lambdas
+
+    class GreetingCard
+      DIFF_PREPROCESSOR = -> (sentence) { sentence.message.split(/\b/) }
+      DIFF_POSTPROCESSOR = -> (array) { array.join }
+      DIFF_CONFLICT_PROCESSOR = ->(outcome_list) do
+        outcome_list.map do |outcome|
+          if outcome.conflicted?
+            [
+              "<span class='conflict_left'>#{outcome.left.join}</span>",
+              "<span class='conflict_base'>#{outcome.base.join}</span>",
+              "<span class='conflict_right'>#{outcome.right.join}</span>"
+            ].join
+          else
+            outcome.result.join
+          end
+        end.join
+      end
+      attr_reader :message
+      def initialize(message)
+        @message = message
+      end
+    end
+
+Where no conflicted GreetingsCards:
+
+    left = GreetingCard.new("Ho! Ho! Ho! Merry Christmas!")
+    base = GreetingCard.new("Merry Christmas!")
+    right = GreetingCard.new("Merry Christmas! And a Happy New Year")
+    Dyph3::Differ.merge(left, base, right).joined_results
+    => "Ho! Ho! Ho! Merry Christmas! And a Happy New Year"
+
+and where conflcits produce:
+
+    left = GreetingCard.new("Happy Christmas!")
+    base = GreetingCard.new("Merry Christmas!")
+    right = GreetingCard.new("Just Christmas!")
+    Dyph3::Differ.merge(left, base, right).joined_results
+    => "<span class='conflict_left'>Happy</span><span class='conflict_base'>Merry</span><span class='conflict_right'>Just</span> Christmas!"
+
+
+## References:
+[Three-way file comparison algorithm (python)](https://www.cbica.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html)
+
+[Moin Three way differ (python)](http://hg.moinmo.in/moin/2.0/file/4a997d9f5e26/MoinMoin/util/diff3.py)
+
+[Text Diff3 (perl)](http://search.cpan.org/~tociyuki/Text-Diff3-0.10/lib/Text/Diff3.pm)
+
+
+##The MIT License (MIT)
+
+Copyright © `2016` `Boundless`
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the “Software”), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 

@@ -13,7 +13,7 @@ class Fish
         conflict_custom: [:tuna],
         left: differ_output[0].left,
         right: differ_output[0].right,
-        base: differ_output[0].right
+        base: differ_output[0].base
      }
    ]
   end
