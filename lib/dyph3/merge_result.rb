@@ -1,6 +1,10 @@
 module Dyph3
   class MergeResult
-    attr_reader :results
+
+    # @param results [Array]  diff3 output
+    # @param join_function [Proc] how to join the results together
+    # @param conflict [Boolean] sets the conflict's state
+    # @param conflict_handler [Proc] what to do with the conflicted results
     def initialize(results, join_function, conflict: false, conflict_handler: nil)
       @results = results
       @join_function = join_function
@@ -8,14 +12,23 @@ module Dyph3
       @conflict = conflict
     end
 
+    # @return [Array] of outcomes (Outcome::Conflicted  or Outcome::Resolved)
+    def results
+      @results
+    end
+
+    #@return [Boolean] success state
     def success?
       !@conflict
     end
 
+    #@return [Boolean] conflict state
     def conflict?
       @conflict
     end
 
+    # Applies the join function or conflict handler to diff3 results array
+    # @return the results with the methods provided by user or defaults applied
     def joined_results
       if conflict?
         if @conflict_handler

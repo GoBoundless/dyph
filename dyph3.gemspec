@@ -4,10 +4,10 @@ require 'dyph3/version'
 Gem::Specification.new do |spec|
   spec.name          = "dyph3"
   spec.version       = Dyph3::VERSION
-  spec.authors       = ["Kevin Mook"]
-  spec.email         = ["kevin@boundless.com"]
-  spec.description   = %q{Dyph3 is a pure-ruby implementation of the diff3 algorithm}
-  spec.summary       = %q{Dyph3 is a pure-ruby implementation of the diff3 algorithm}
+  spec.authors       = ["Kevin Mook", "Andrew Montalto", "Jacob Elder"]
+  spec.email         = ["opensource@boundless.com"]
+  spec.description   = %q{A library of useful diffing algorithms for Ruby}
+  spec.summary       = %q{A library of useful diffing algorithms for Ruby}
   spec.homepage      = "https://github.com/GoBoundless/dyph3"
   spec.license       = "MIT"
 
@@ -26,5 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "factory_girl"
   spec.add_development_dependency "codeclimate-test-reporter"
   spec.add_development_dependency 'rspec_junit_formatter'
+  spec.add_development_dependency 'faker'
+  spec.add_development_dependency 'yard'
 
 end

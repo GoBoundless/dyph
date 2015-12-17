@@ -1,14 +1,6 @@
 module Animal
-  def ==(other)
-    other.class == self.class &&
-    other.type == self.type
-  end
-
-  alias_method :eql?, :==
-
-  def hash
-    type.hash
-  end
+  include Dyph3::Equatable
+  equate_with :type
 end
 
 class Fish
@@ -21,7 +13,7 @@ class Fish
         conflict_custom: [:tuna],
         left: differ_output[0].left,
         right: differ_output[0].right,
-        base: differ_output[0].right
+        base: differ_output[0].base
      }
    ]
   end

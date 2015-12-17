@@ -1,5 +1,5 @@
 module Dyph3
-  class Base
+  class Action
     attr_accessor :value, :old_index, :new_index
 
     def initialize(value:, old_index:, new_index:)

@@ -16,8 +16,8 @@ module Dyph3
       end
 
       private
-        # @param [in] conflicts
-        # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
+        # @param [in] results
+        # @return the list of conflicts with contiguous parts merged if they are non_conflicts
         def combine_non_conflicts(results)
           results.reduce([]) do |rs, r|
             if rs.any? && rs.last.resolved? && r.resolved?

@@ -1,5 +1,6 @@
 module Dyph3
   module TwoWayDiffers
+
     class OriginalHeckelDiff
       # Algorithm adapted from http://www.rad.upenn.edu/sbia/software/basis/apidoc/v1.2/diff3_8py_source.html
 
@@ -15,7 +16,7 @@ module Dyph3
       # Two-way diff based on the algorithm by P. Heckel.
       # @param [in] text_a Array of lines of first text.
       # @param [in] text_b Array of lines of second text.
-      # @returns TODO
+      # @return TODO
       def self.diff(text_a, text_b)
         d    = []
         uniq = [[text_a.length, text_b.length]]
@@ -215,7 +216,7 @@ module Dyph3
 
         # @param [in] diff        conflicts in diff structure
         # @param [in] diff_type   type of diff looked for in diff
-        # @returns diff_type if any conflicts in diff are of type diff_type.  otherwise returns nil
+        # @return diff_type if any conflicts in diff are of type diff_type.  otherwise return nil
         def self._assoc_range(diff, diff_type)
           diff.each do |d|
             if d[0] == diff_type
@@ -312,8 +313,8 @@ module Dyph3
           [i_target, j_target, k_target]
         end
 
-        # @param [in] conflicts
-        # @returns the list of conflicts with contiguous parts merged if they are non_conflicts
+        # @param [in] res
+        # @return the list of conflicts with contiguous parts merged if they are non_conflicts
         def self.merge_non_conflicts(res, i = 0)
           if i == res.length - 1
             return res
@@ -330,7 +331,7 @@ module Dyph3
         # @param [in] lo        indec for beginning of accumulation range
         # @param [in] hi        index for end of accumulation range
         # @param [in] text      array of lines of text
-        # @returns a string of lines lo to high joined by new lines, with a trailing new line. 
+        # @return a string of lines lo to high joined by new lines, with a trailing new line.
         def self.accumulate_lines(lo, hi, text)
           lines = []
           (lo .. hi).each do |lineno|
@@ -344,7 +345,7 @@ module Dyph3
         # @param [in] ours        unsplit text of ours
         # @param [in] base        unsplit text of base
         # @param [in] theirs      unsplit text of theirs
-        # @returns if a trailing newline should be added.  It should be added if all texts had a trailing newline, 
+        # @return if a trailing newline should be added.  It should be added if all texts had a trailing newline, 
         #    or if one or both changes added a new line when there was not one before.
         def self.add_trailing_newline?(ours, base, theirs)
           our_newline = ours[-1] == "\n"
@@ -357,7 +358,7 @@ module Dyph3
         # @param [in] ours        unsplit text of ours
         # @param [in] base        unsplit text of base
         # @param [in] theirs      unsplit text of theirs
-        # @returns the result with the possible trailing newlines added if necessary.
+        # @return the result with the possible trailing newlines added if necessary.
         def self.handle_trailing_newline(ours, base, theirs, result)
           last = result[-1]
           if last[:type] == :non_conflict && last[:text] != "\n" 
