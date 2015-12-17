@@ -118,7 +118,10 @@ In addition to argument level `split`, `join`, `merge` functions, Dyph3 also sup
 that will look something like:
 
     class GreetingCard
-      DIFF_PREPROCESSOR = -> (sentence) { sentence.message.split(/\b/) }
+      attr_reader :message
+
+      #Dyph3 Processors
+      DIFF_PREPROCESSOR  = -> (sentence) { sentence.message.split(/\b/) }
       DIFF_POSTPROCESSOR = -> (array) { array.join }
       DIFF_CONFLICT_PROCESSOR = ->(outcome_list) do
         outcome_list.map do |outcome|
@@ -133,10 +136,11 @@ that will look something like:
           end
         end.join
       end
-      attr_reader :message
+
       def initialize(message)
         @message = message
       end
+
     end
 
 When there are no conflictes:
