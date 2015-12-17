@@ -50,7 +50,7 @@ To execute a three way diff and merge:
     right = [:b, :c, :d, :e]
     Dyph3::Differ.merge(left, base, right)
 
-Which returns a Dyph3::MergeResult with a list of result outcomes:
+Which returns a `Dyph3::MergeResult` with a list of result outcomes:
 
     [ OutCome::Resolved.new(result: [:b, :c, :d, :e] ]
 
@@ -98,14 +98,24 @@ which may be invoked with
 will then return
 
     "The right brown fox left the lazy dog"
+
 ### Conflict Handlers
-Similarly one can instruct the differ on how to deal with conflicts should they come up. The conflict_function sole argument the list of Outcomes from the diff
+Similarly one can instruct the differ on how to deal with conflicts. The `conflict_function` is passed a list of Outcomes from the diff:
 
     conflict_funciton = ->(outcome_list) { ... }
 
-which you can then pass to the Differ#merge method as the `conflict_function`
-### Class Level Processors
-In addion to argument level split, join, merge function, Dyph3 also supports object level class lambdas
+which one can then pass to the `Differ#merge` method as
+
+    Dyph3::Differ.merge(left, base, right, conflict_function: conflict_funciton)
+
+### Class Level Processor with Example
+In addition to argument level `split`, `join`, `merge` functions, Dyph3 also supports object level processors:
+
+    DIFF_PREPROCESSOR = -> (object) { ... }
+    DIFF_POSTPROCESSOR = -> (array) { ... }
+    DIFF_CONFLICT_PROCESSOR = ->(outcome_list) { ... }
+
+that will look something like:
 
     class GreetingCard
       DIFF_PREPROCESSOR = -> (sentence) { sentence.message.split(/\b/) }
@@ -129,7 +139,7 @@ In addion to argument level split, join, merge function, Dyph3 also supports obj
       end
     end
 
-Where no conflicted GreetingsCards:
+When there are no conflictes:
 
     left = GreetingCard.new("Ho! Ho! Ho! Merry Christmas!")
     base = GreetingCard.new("Merry Christmas!")
@@ -137,7 +147,7 @@ Where no conflicted GreetingsCards:
     Dyph3::Differ.merge(left, base, right).joined_results
     => "Ho! Ho! Ho! Merry Christmas! And a Happy New Year"
 
-and where conflcits produce:
+and when there are:
 
     left = GreetingCard.new("Happy Christmas!")
     base = GreetingCard.new("Merry Christmas!")
