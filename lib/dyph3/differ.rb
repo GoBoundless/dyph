@@ -62,7 +62,7 @@ module Dyph3
 
     # @return [TwoWayDiffer]
     def self.default_diff2
-      Dyph3::TwoWayDiffers::OriginalHeckelDiff
+      Dyph3::TwoWayDiffers::HeckelDiff
     end
 
     # @return [ThreeWayDiffer]
