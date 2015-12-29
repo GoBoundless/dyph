@@ -1,133 +1,155 @@
 module Dyph3
   module Support
-    module Diff3
-      extend self
-      # Three-way diff based on the GNU diff3.c by R. Smith.
-      #   @param [in] left    Array of lines of left text.
-      #   @param [in] base    Array of lines of base text.
-      #   @param [in] right   Array of lines of right text.
-      #   @return Array of tuples containing diff results. The tuples consist of
-      #        (cmd, loA, hiA, loB, hiB), where cmd is either one of
-      #        :choose_left, :choose_right, :no_conflict_found, or :possible_conflict.
-      def execute_diff(left, base, right, diff2)
 
-        # diff result => [(cmd, loA, hiA, loB, hiB), ..]
-        d2 = {
-          left: diff2.diff(base, left), # queue of conflicts with left
-          right: diff2.diff(base, right) # queue of conflicts with right
-        }
-
-        result_diff3 = []
-
-        # continue iterating while there are still conflicts.  goal is to get a set of 3conflicts (cmd, loA, hiA, loB, hiB)
-        while d2[:left].length > 0 || d2[:right].length > 0
-          r2 = { left: [], right: [] }
-          base_lo, base_hi = determine_continual_change_range_in_base(r2, d2)
-#          puts "orig base_lo #{base_lo} base_hi #{base_hi}"
-          left_lo, left_hi    = get_hi_lo_ranges(r2, base_lo, base_hi, target: :left)
-          right_lo, right_hi  = get_hi_lo_ranges(r2, base_lo, base_hi, target: :right)
-
-
-          change_type = determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
-          result_diff3 << [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
-        end
-
-        result_diff3
+    class Diff3
+      def self.execute_diff(left, base, right, diff2)
+        Diff3.new(left, base, right, diff2).get_differences
       end
 
+      def initialize(left, base, right, diff2)
+        @left   = left
+        @right  = right
+        @base   = base
+        @diff2 = diff2
+      end
+
+      def get_differences
+        #[[action, base_lo, base_hi, side_lo, side_hi]...]
+        left_diff  = @diff2.diff(@base, @left).map { |r| Diff2Command.new(*r) }
+        right_diff = @diff2.diff(@base, @right).map { |r| Diff2Command.new(*r) }
+        collapse_differences(DiffDoubleQueue.new(left_diff, right_diff))
+      end
+
+      Diff2Command = Struct.new(:code, :base_lo, :base_hi, :side_lo, :side_hi)
+
       private
-        def determine_continual_change_range_in_base(r2, d2)
-          i_target, j_target, k_target = set_targets(d2)
-          # simultaneously consider all changes that overlap within a region. So, attempt to resolve
-          # a single conflict from 'left' or 'right', but then must also consider all overlapping changes from the other set.
-          hi = d2[j_target][0][2] #sets the limit as to the max line this conflict will consider
 
-          r2[j_target] << d2[j_target].shift #set r2[j_target] to be the diff from j_target we are considering
-          while d2[k_target].length > 0 && (d2[k_target][0][1] <= hi + 1) #if there are still changes in k_target and lo_k <= hi_j +1
+        def collapse_differences(diffs_queue, differences=[])
+          if diffs_queue.finished?
+            differences
+          else
+            result_queue   = DiffDoubleQueue.new
+            init_side =  diffs_queue.choose_side
+            top_diff   =  diffs_queue.dequeue
 
-            hi_k = d2[k_target][0][2]
-            r2[k_target] << d2[k_target].shift # continue to put all overlapping changes with k_target onto r2[k_target]
-            if hi < hi_k
-              hi = hi_k #if the last conflict goes too high, switch the target.
+            result_queue.enqueue(init_side, top_diff)
 
-              j_target = k_target
-              k_target = invert_target(k_target)
-            end
+            diffs_queue.switch_sides
+            build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
+
+            differences << determine_differnce(result_queue, init_side, diffs_queue.switch_sides)
+            collapse_differences(diffs_queue, differences)
           end
-
-          lo2 = r2[i_target][ 0][1]
-          hi2 = r2[j_target][-1][2]
-          [lo2, hi2]
         end
 
-        def determine_change_type(r2, left, right, left_lo, left_hi, right_lo, right_hi)
-          if r2[:left].empty?
-            cmd = :choose_right
-          elsif r2[:right].empty?
-            cmd = :choose_left
-          elsif left_hi - left_lo != right_hi - right_lo
-            cmd = :possible_conflict
+        def build_result_queue(diffs_queue, prev_base_hi, result_queue)
+          #current side can be :left or :right
+          if queue_finished?(diffs_queue.peek, prev_base_hi)
+            result_queue
           else
+            top_diff = diffs_queue.dequeue
+            result_queue.enqueue(diffs_queue.current_side, top_diff)
 
-            cmd = :no_conflict_found
-            (0 .. left_hi - left_lo).each do |d|
-              (i0, i1) = [left_lo + d - 1, right_lo + d - 1]
-              ok0 = (0 <= i0 && i0 < left.length)
-              ok1 = (0 <= i1 && i1 < right.length)
-              if (ok0 ^ ok1) || (ok0 && left[i0] != right[i1])
-                cmd = :possible_conflict
-                break
-              end
-            end
-          end
-          cmd
-        end
-
-        def set_targets(d2)
-          if d2[:left].empty?
-            i_target = :right
-          else
-            if d2[:right].empty?
-              i_target = :left
+            if prev_base_hi < top_diff.base_hi
+              #switch the current side and adjust the base_hi
+              diffs_queue.switch_sides
+              build_result_queue(diffs_queue, top_diff.base_hi, result_queue)
             else
-              #there are conflicts in both queues. let the target be the earlier one.
-              if d2[:left][0][1] <= d2[:right][0][1]
-                i_target = :left
-              else
-                i_target = :right
-              end
+              build_result_queue(diffs_queue, prev_base_hi, result_queue)
             end
           end
-
-          j_target = i_target
-          k_target = invert_target(i_target) # k_target is opposite of i and j
-
-          [i_target, j_target, k_target]
         end
 
-        def invert_target(target)
-          if target == :left
-            :right
+        def queue_finished?(queue, prev_base_hi)
+          queue.empty? || queue.first.base_lo > prev_base_hi + 1
+        end
+
+        def determine_differnce(diff_diffs_queue, init_side, final_side)
+          base_lo = diff_diffs_queue.get(init_side).first.base_lo
+          base_hi = diff_diffs_queue.get(final_side).last.base_hi
+#          puts "Beta base_lo #{base_lo} base_hi #{base_hi}"
+          left_lo,  left_hi    = diffable_endpoints(diff_diffs_queue.get(:left), base_lo, base_hi)
+          right_lo, right_hi   = diffable_endpoints(diff_diffs_queue.get(:right), base_lo, base_hi)
+
+          #the endpoints are offset one, neet to account for that in getting subsets
+          left_subset = @left[left_lo-1 .. left_hi]
+          right_subset = @right[right_lo-1 .. right_hi]
+          change_type = decide_action(diff_diffs_queue, left_subset, right_subset)
+          [change_type, left_lo, left_hi, right_lo, right_hi, base_lo, base_hi]
+        end
+
+        def diffable_endpoints(command, base_lo, base_hi)
+          if command.any?
+            lo = command.first.side_lo - command.first.base_lo +  base_lo
+            hi = command.last.side_hi  - command.last.base_hi  + base_hi
+            [lo, hi]
           else
-            :left
+            [base_lo,  base_hi]
           end
         end
 
-        def get_hi_lo_ranges(r2, base_lo, base_hi, target:)
-          #r2: {:left=>[["c", 2, 2, 2, 2]], :right=>[["a", 3, 2, 3, 3]]}
-          #lo:  lo offset
-          #hi: j_target's hi
-          #target: which target we are currently checking
-          left_lo, left_hi, right_lo, right_hi = [1,2,3,4] #indexes
-          if !r2[target].empty?
-            [
-              r2[target].first[right_lo] - r2[target].first[left_lo] + base_lo,
-              r2[target].last[right_hi] - r2[target].last[left_hi] + base_hi
-            ]
+        def decide_action(diff_diffs_queue, left_subset, right_subset)
+          #adjust because the ranges are 1 indexed
+
+          if diff_diffs_queue.empty?(:left)
+            :choose_right
+          elsif diff_diffs_queue.empty?(:right)
+            :choose_left
           else
-            [base_lo, base_hi]
+            if left_subset != right_subset
+              :possible_conflict
+            else
+              :no_conflict_found
+            end
           end
         end
     end
+
+    class DiffDoubleQueue
+      attr_reader :current_side
+      def initialize(left=[], right=[])
+        @diffs = { left: left, right: right }
+      end
+
+      def dequeue(side=current_side)
+        @diffs[side].shift
+      end
+
+      def peek(side=current_side)
+        @diffs[side]
+      end
+
+      def finished?
+        empty?(:left) && empty?(:right)
+      end
+
+      def enqueue(side=current_side, val)
+        @diffs[side] << val
+      end
+
+      def get(side=current_side)
+        @diffs[side]
+      end
+
+      def empty?(side=current_side)
+        @diffs[side].empty?
+      end
+
+      def switch_sides(side=current_side)
+        @current_side = side == :left ? :right : :left
+      end
+
+      def choose_side
+        if empty? :left
+          @current_side = :right
+        elsif empty? :right
+          @current_side = :left
+        else
+          #choose the lowest side relative to base
+          @current_side = get(:left).first.base_lo <= get(:right).first.base_lo ? :left : :right
+        end
+      end
+    end
+
   end
 end

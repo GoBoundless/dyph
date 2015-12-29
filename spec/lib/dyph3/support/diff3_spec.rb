@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 describe Dyph3::Support::Diff3 do
-  [ Dyph3::TwoWayDiffers::HeckelDiff, Dyph3::TwoWayDiffers::OriginalHeckelDiff].each do |diff2|
-    let(:diff3)  { Dyph3::Support::Diff3Beta }
+  [ Dyph3::TwoWayDiffers::HeckelDiff].each do |diff2|
+    let(:diff3)  { Dyph3::Support::Diff3 }
 
     [ lambda { |x| x.to_s } , lambda { |x| x.to_sym }, lambda { |x| Fish.new(x) } ].each do |f|
       describe ".execute_diff" do

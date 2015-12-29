@@ -1,8 +1,7 @@
 require 'spec_helper'
 
 describe Dyph3::TwoWayDiffers::HeckelDiff do
-  [Dyph3::TwoWayDiffers::HeckelDiff, Dyph3::TwoWayDiffers::OriginalHeckelDiff].each do |differ|
-    let(:differ) { Dyph3::TwoWayDiffers::HeckelDiff }
+  [Dyph3::TwoWayDiffers::HeckelDiff].each do |differ|
     describe '.diff' do
       let(:iterations) { 10 }
 
