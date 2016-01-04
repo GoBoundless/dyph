@@ -3,6 +3,11 @@ module Dyph3
     attr_reader :result
     def initialize(result)
       @result = result
+      @combiner = ->(x, y) { x + y }
+    end
+
+    def set_combiner(lambda)
+      @combiner = lambda
     end
 
     def ==(other)
@@ -17,7 +22,7 @@ module Dyph3
     end
 
     def combine(other)
-       @result += other.result
+       @result = @combiner[@result, other.result]
        self
     end
 

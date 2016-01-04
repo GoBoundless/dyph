@@ -62,23 +62,28 @@ module Dyph3
             (ia ... chunk_desc.left_lo).each do |lineno|
               @result <<  Dyph3::Outcome::Resolved.new(accumulate_lines(ia, lineno, right))
             end
-            outcome = if chunk_desc.action == :change
-              Outcome::Conflicted.new(
-                left: accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, left),
-                right: accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, right),
-                base: []
-              )
-            elsif chunk_desc.action == :add
-              Outcome::Resolved.new(
-                accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, left)
-              )
-            end
+
+            outcome =  determine_outcome(chunk_desc, left, right)
             ia = chunk_desc.right_hi + 1
             @result << outcome if outcome
           end
 
           final_text = accumulate_lines(ia, right.length + 1, right)
           @result <<  Dyph3::Outcome::Resolved.new(final_text) unless final_text.empty?
+        end
+
+        def determine_outcome(chunk_desc, left, right)
+          if chunk_desc.action == :change
+            Outcome::Conflicted.new(
+              left: accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, left),
+              right: accumulate_lines(chunk_desc.left_lo, chunk_desc.left_hi, right),
+              base: []
+            )
+          elsif chunk_desc.action == :add
+            Outcome::Resolved.new(
+              accumulate_lines(chunk_desc.right_lo, chunk_desc.right_hi, left)
+            )
+          end
         end
 
         def set_text(orig_text, lo, hi)
