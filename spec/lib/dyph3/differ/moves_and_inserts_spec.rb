@@ -17,6 +17,8 @@ describe Dyph3::Differ do
         let(:right) {[:e, :a, :c, :d, :b]}
 
         it { expect(subject.joined_results).to eq joined_result }
+        it { expect(subject.success?).to be false }
+        it { expect(subject.conflict?).to be true }
       end
 
       describe "should handle when base and left match" do
@@ -25,6 +27,7 @@ describe Dyph3::Differ do
         let(:right) { [:b, :c, :d, :e] }
         it { expect(subject.joined_results).to eq right}
         it { expect(subject.success?).to be true}
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when base and left match" do
@@ -34,6 +37,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right}
         it { expect(subject.success?).to be true}
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when base and right match" do
@@ -43,6 +47,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq left }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when base and left match" do
@@ -52,6 +57,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when the first elements are switched and an insert at the end" do
@@ -61,6 +67,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when the last elements are switched and an insert at the beginning" do
@@ -70,6 +77,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle when all three are different" do
@@ -79,6 +87,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
 
       describe "should handle this really complex real-world case" do
@@ -88,6 +97,7 @@ describe Dyph3::Differ do
 
         it { expect(subject.joined_results).to eq right }
         it { expect(subject.success?).to be true }
+        it { expect(subject.conflict?).to be false }
       end
     end
   end

@@ -26,6 +26,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe "a conflict in the last line" do
@@ -39,6 +40,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe "a conflict in the center" do
@@ -53,6 +55,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe 'should handle overlapping conflicts' do
@@ -70,6 +73,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe "should handle a conflict, non_conflict, conflict pattern" do
@@ -85,6 +89,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe 'periodic conflicts' do
@@ -103,6 +108,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe 'should handle non overlapping base changes without conflicts' do
@@ -113,6 +119,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq false}
+        it {expect(subject.success?).to eq true}
       end
 
       describe "partial deletion of the first half of a line" do
@@ -126,6 +133,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe "both sides deleting, but one side deleting more" do
@@ -143,6 +151,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
 
       describe 'should handle a creation of two different things' do
@@ -153,6 +162,7 @@ describe Dyph3::Differ do
 
         it {expect(subject.joined_results).to eq expected_result}
         it {expect(subject.conflict?).to eq true}
+        it {expect(subject.success?).to eq false}
       end
     end
   end
