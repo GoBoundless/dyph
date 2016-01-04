@@ -61,6 +61,14 @@ describe Dyph3::Outcome::Resolved do
     describe "#combine" do
       subject { outcome.combine(other_outcome).result }
       it { is_expected.to eq [:result, :other_result]}
+
+      describe "#set_combiner" do
+        before { outcome.set_combiner( ->(x , y) { y } )}
+        subject { outcome.combine(other_outcome).result }
+        it { is_expected.to eq [:other_result]}
+      end
     end
+
+
   end
 end
