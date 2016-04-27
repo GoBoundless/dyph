@@ -1,8 +1,9 @@
 Dyph
 =====
 [![Circle CI](https://img.shields.io/circleci/project/GoBoundless/dyph/master.svg)](https://circleci.com/gh/GoBoundless/dyph)
-[![Code Climate](https://codeclimate.com/github/GoBoundless/dyph/badges/gpa.svg)](https://codeclimate.com/github/GoBoundless/dyph)
-[![Test Coverage](https://codeclimate.com/github/GoBoundless/dyph/badges/coverage.svg)](https://codeclimate.com/github/GoBoundless/dyph)
+[![Code Climate](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/badges/ef7028959d126bffc0d9/gpa.svg)](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/feed)
+[![Test Coverage](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/badges/ef7028959d126bffc0d9/coverage.svg)](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/coverage)
+[![Issue Count](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/badges/ef7028959d126bffc0d9/issue_count.svg)](https://codeclimate.com/repos/54e39663e30ba07dc0001de6/feed)
 [![Documentation](https://img.shields.io/badge/yard-docs-blue.svg)](http://rubydoc.info/github/GoBoundless/dyph/master)
 
 A library of useful diffing algorithms for Ruby.
