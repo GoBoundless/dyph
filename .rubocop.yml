@@ -2,8 +2,7 @@
 # This is used to easily disable Style/* checks
 AllCops:
   DisabledByDefault: true
-  Exclude:
-    - 'examples/*'
+  TargetRubyVersion: 2.3
 
 ################## STYLE #################################
 
@@ -868,7 +867,7 @@ Lint/AmbiguousRegexpLiteral:
 Lint/AssignmentInCondition:
   Description: "Don't use assignment in conditions."
   StyleGuide: 'https://github.com/bbatsov/ruby-style-guide#safe-assignment-in-condition'
-  Enabled: true
+  Enabled: false
 
 Lint/BlockAlignment:
   Description: 'Align block ends correctly.'
@@ -919,7 +918,7 @@ Lint/EmptyInterpolation:
 
 Lint/EndAlignment:
   Description: 'Align ends correctly.'
-  Enabled: true
+  Enabled: false
 
 Lint/EndInMethod:
   Description: 'END blocks should not be placed inside method definitions.'

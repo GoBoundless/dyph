@@ -1,9 +1,9 @@
-Dyph3
+Dyph
 =====
-[![Circle CI](https://img.shields.io/circleci/project/GoBoundless/dyph3/master.svg)](https://circleci.com/gh/GoBoundless/dyph3)
-[![Code Climate](https://codeclimate.com/github/GoBoundless/dyph3/badges/gpa.svg)](https://codeclimate.com/github/GoBoundless/dyph3)
-[![Test Coverage](https://codeclimate.com/github/GoBoundless/dyph3/badges/coverage.svg)](https://codeclimate.com/github/GoBoundless/dyph3)
-[![Documentation](https://img.shields.io/badge/yard-docs-blue.svg)](http://rubydoc.info/github/GoBoundless/dyph3/master)
+[![Circle CI](https://img.shields.io/circleci/project/GoBoundless/dyph/master.svg)](https://circleci.com/gh/GoBoundless/dyph)
+[![Code Climate](https://codeclimate.com/github/GoBoundless/dyph/badges/gpa.svg)](https://codeclimate.com/github/GoBoundless/dyph)
+[![Test Coverage](https://codeclimate.com/github/GoBoundless/dyph/badges/coverage.svg)](https://codeclimate.com/github/GoBoundless/dyph)
+[![Documentation](https://img.shields.io/badge/yard-docs-blue.svg)](http://rubydoc.info/github/GoBoundless/dyph/master)
 
 A library of useful diffing algorithms for Ruby.
 
@@ -11,7 +11,7 @@ A library of useful diffing algorithms for Ruby.
 
 Add this line to your application's Gemfile:
 
-    gem 'dyph3'
+    gem 'dyph'
 
 And then execute:
 
@@ -19,7 +19,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install dyph3
+    $ gem install dyph
 
 # Quick start
 ## Two way diffing
@@ -27,9 +27,9 @@ To diff two arrays:
 
     left = [:a, :b, :c, :d]
     right = [:b, :c, :d, :e]
-    Dyph3::Differ.two_way_diff(left, right)
+    Dyph::Differ.two_way_diff(left, right)
 
-which will return an array of `Dyph3::Action` with offsets
+which will return an array of `Dyph::Action` with offsets
 
     [
       <Action::Delete   @new_index=0, @old_index=1, @value=:a>,
@@ -48,9 +48,9 @@ To execute a three way diff and merge:
     left  = [:a, :b, :c, :d]
     base  = [:a, :b, :c]
     right = [:b, :c, :d, :e]
-    Dyph3::Differ.merge(left, base, right)
+    Dyph::Differ.merge(left, base, right)
 
-Which returns a `Dyph3::MergeResult` with a list of result outcomes:
+Which returns a `Dyph::MergeResult` with a list of result outcomes:
 
     [ <OutCome::Resolved(@result=[:b, :c, :d, :e]> ]
 
@@ -64,7 +64,7 @@ For example:
     left  = [:a, :l, :c]
     base  = [:a, :b, :c]
     right = [:a, :r, :c]
-    Dyph3::Differ.merge(left, base, right)
+    Dyph::Differ.merge(left, base, right)
 
 returns the following `MergeResult#result`
 
@@ -77,10 +77,10 @@ returns the following `MergeResult#result`
 and has `MergeResult#conflict` set to `true`
 
 ## Split, Join, and Conflict functions
-Dyph3 works on arrays of objects that implement equatable and hash (see `Dyph3::Equatable`). For various reasons one might want to delegate the splitting and joining of the input/out to Dyph3. (i.e. so one would not have to `map` over the input and output to do the transformation)
+Dyph works on arrays of objects that implement equatable and hash (see `Dyph::Equatable`). For various reasons one might want to delegate the splitting and joining of the input/out to Dyph. (i.e. so one would not have to `map` over the input and output to do the transformation)
 
 ### With merge parameter `lambdas`
-One can define `split_funciton`, `join_function`, and `conflict_function` to `Dyph3::Diff.merge` such as splitting on word boundries, (but keeping delimiters):
+One can define `split_funciton`, `join_function`, and `conflict_function` to `Dyph::Diff.merge` such as splitting on word boundries, (but keeping delimiters):
 
     split_function =  ->(string) { string.split(/\b/) }
 
@@ -93,7 +93,7 @@ which may be invoked with
     left  = "The quick brown fox left the lazy dog"
     base  = "The quick brown fox jumped over the lazy dog."
     right = "The right brown fox jumped over the lazy dog"
-    merge_results = Dyph3::Differ.merge(left, base, right, split_function: split_function, join_function: join_function)
+    merge_results = Dyph::Differ.merge(left, base, right, split_function: split_function, join_function: join_function)
     merge_results.joined_results
 will then return
 
@@ -106,10 +106,10 @@ Similarly one can instruct the differ on how to deal with conflicts. The `confli
 
 which one can then pass to the `Differ#merge` method as
 
-    Dyph3::Differ.merge(left, base, right, conflict_function: conflict_funciton)
+    Dyph::Differ.merge(left, base, right, conflict_function: conflict_funciton)
 
 ### Class Level Processor with Example
-In addition to argument level `split`, `join`, `merge` functions, Dyph3 also supports object level processors:
+In addition to argument level `split`, `join`, `merge` functions, Dyph also supports object level processors:
 
     DIFF_PREPROCESSOR = -> (object) { ... }
     DIFF_POSTPROCESSOR = -> (array) { ... }
@@ -120,7 +120,7 @@ that will look something like:
     class GreetingCard
       attr_reader :message
 
-      #Dyph3 Processors
+      #Dyph Processors
       DIFF_PREPROCESSOR  = -> (sentence) { sentence.message.split(/\b/) }
       DIFF_POSTPROCESSOR = -> (array) { array.join }
       DIFF_CONFLICT_PROCESSOR = ->(outcome_list) do
@@ -148,7 +148,7 @@ When there are no conflictes:
     left = GreetingCard.new("Ho! Ho! Ho! Merry Christmas!")
     base = GreetingCard.new("Merry Christmas!")
     right = GreetingCard.new("Merry Christmas! And a Happy New Year")
-    Dyph3::Differ.merge(left, base, right).joined_results
+    Dyph::Differ.merge(left, base, right).joined_results
 
     => "Ho! Ho! Ho! Merry Christmas! And a Happy New Year"
 
@@ -157,7 +157,7 @@ and when there are:
     left = GreetingCard.new("Happy Christmas!")
     base = GreetingCard.new("Merry Christmas!")
     right = GreetingCard.new("Just Christmas!")
-    Dyph3::Differ.merge(left, base, right).joined_results
+    Dyph::Differ.merge(left, base, right).joined_results
 
     => "<span class='conflict_left'>Happy</span><span class='conflict_base'>Merry</span><span class='conflict_right'>Just</span> Christmas!"
 
