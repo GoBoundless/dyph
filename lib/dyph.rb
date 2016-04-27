@@ -1,6 +1,8 @@
 require "dyph/version"
 require "dyph/differ"
 
+require "dyph/min_diff"
+
 require "dyph/merge_result"
 
 require "dyph/outcome"

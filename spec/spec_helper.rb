@@ -1,12 +1,13 @@
 require "codeclimate-test-reporter"
 CodeClimate::TestReporter.start
 
-require 'dyph'
+require "dyph"
 
 require "pry"
 require "awesome_print"
-require 'codeclimate-test-reporter'
-require 'faker'
+require "codeclimate-test-reporter"
+require "faker"
+require "rspec/its"
 
 Dir[File.dirname(__FILE__) + '/fixtures/*.rb'].each {|file| require file }
 
