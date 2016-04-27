@@ -15,7 +15,8 @@ module Dyph
         @text3 = Text3.new(left: left, right: right, base: base)
       end
 
-      def execute_three_way_merge()
+      # rubocop:disable Metrics/AbcSize
+      def execute_three_way_merge
         d3 = @diff3.execute_diff(@text3.left, @text3.base, @text3.right, @diff2)
         chunk_descs = d3.map { |raw_chunk_desc| ChunkDesc.new(raw_chunk_desc) }
         index = 1
@@ -41,9 +42,7 @@ module Dyph
 
         @result << Dyph::Outcome::Resolved.new(ending_text) unless ending_text.empty?
       end
-
-
-
+      # rubocop:enable Metrics/AbcSize
 
       protected
         def set_conflict(chunk_desc)

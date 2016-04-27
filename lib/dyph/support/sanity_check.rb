@@ -3,6 +3,7 @@ module Dyph
     module SanityCheck
       extend self
 
+      # rubocop:disable Metrics/AbcSize
       def ensure_no_lost_data(left, base, right, final_result)
         result_word_map = {}
         final_result.each do |result_block|
@@ -28,6 +29,7 @@ module Dyph
           raise BadMergeException.new(final_result)
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       private
         def count_blocks(blocks, hash={})

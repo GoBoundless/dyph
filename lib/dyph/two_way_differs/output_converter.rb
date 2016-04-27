@@ -1,5 +1,6 @@
 module Dyph
   module TwoWayDiffers
+    # rubocop:disable Metrics/ModuleLength
     module OutputConverter
       extend self
 
