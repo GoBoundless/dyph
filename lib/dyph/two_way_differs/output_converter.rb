@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/AbcSize
 module Dyph
   module TwoWayDiffers
     # rubocop:disable Metrics/ModuleLength
