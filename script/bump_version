@@ -18,7 +18,7 @@ END
 
 write_version() {
   cat >$VERSION_FILE <<EOL
-module Dyph3
+module Dyph
   VERSION = "$VERSION"
 end
 EOL
@@ -36,11 +36,11 @@ commit_tag() {
 }
 
 build_gem() {
-  gem build dyph3.gemspec
+  gem build dyph.gemspec
 }
 
 push_gemfury() {
-  fury push "dyph3-$VERSION.gem" --as=boundless
+  fury push "dyph-$VERSION.gem" --as=boundless
 }
 
 run() {
@@ -52,7 +52,7 @@ run() {
   push_gemfury
 }
 
-VERSION_FILE="$ROOT_DIR/lib/dyph3/version.rb"
+VERSION_FILE="$ROOT_DIR/lib/dyph/version.rb"
 while getopts "v:f:" OPTION ; do
   case $OPTION in
     h)

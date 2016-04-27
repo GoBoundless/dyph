@@ -1,5 +1,5 @@
 module Animal
-  include Dyph3::Equatable
+  include Dyph::Equatable
   equate_with :type
 end
 
